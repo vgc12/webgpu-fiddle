@@ -1,6 +1,5 @@
 import computeShader from '@/shaders/compute.wgsl';
-import vertexShader from '@/shaders/vertex.wgsl';
-import fragmentShader from '@/shaders/fragment.wgsl';
+import graphicsShader from '@/shaders/graphics.wgsl';
 
 export interface IRenderer {
     start(): void;
@@ -15,16 +14,17 @@ export class WebGPURenderer implements IRenderer {
     private format: GPUTextureFormat;
     private context: GPUCanvasContext;
     private initialized: boolean = false;
-    private computePipeline: GPUComputePipeline = null;
-    private renderPipeline: GPURenderPipeline = null;
+    private computePipeline: GPUComputePipeline;
+    private renderPipeline: GPURenderPipeline;
     private computeShaderModule: GPUShaderModule | null = null;
-    private vertexShaderModule: GPUShaderModule | null = null;
-    private fragmentShaderModule: GPUShaderModule | null = null;
+    private graphicsShaderModule: GPUShaderModule | null = null;
     private bindGroupA: GPUBindGroup | null | undefined;
     private bindGroupB: GPUBindGroup | null | undefined;
     private particleBufferA: GPUBuffer;
     private particleBufferB: GPUBuffer;
-    private PARTICLE_COUNT: number = 1000;
+    private particleCount: number = 1000;
+    private animationFrameId: number | null = null;
+
     useBufferA: boolean;
 
     async init() {
@@ -35,6 +35,7 @@ export class WebGPURenderer implements IRenderer {
         this.format = navigator.gpu.getPreferredCanvasFormat();
         this.device = await this.adapter.requestDevice()
         this.context = this.canvas.getContext('webgpu') as GPUCanvasContext;
+        
         this.context.configure({
             device: this.device,
             format: this.format,
@@ -46,15 +47,11 @@ export class WebGPURenderer implements IRenderer {
             code: computeShader
         });
 
-        this.vertexShaderModule = this.device.createShaderModule({
+        this.graphicsShaderModule = this.device.createShaderModule({
             label: 'Particle Vertex Shader',
-            code: vertexShader
+            code: graphicsShader
         });
 
-        this.fragmentShaderModule = this.device.createShaderModule({
-            label: 'Particle Fragment Shader',
-            code: fragmentShader
-        });
 
         this.computePipeline = this.device.createComputePipeline({
             layout: "auto",
@@ -67,8 +64,8 @@ export class WebGPURenderer implements IRenderer {
         this.renderPipeline = this.device.createRenderPipeline({
             layout: 'auto',
             vertex: {
-                module: this.vertexShaderModule,
-                entryPoint: 'main',
+                module: this.graphicsShaderModule,
+                entryPoint: 'vertexMain',
                 buffers: [{
                     arrayStride: 16,
                     stepMode: 'instance',
@@ -84,14 +81,14 @@ export class WebGPURenderer implements IRenderer {
                 }]
             },
             fragment: {
-                module: this.fragmentShaderModule,
-                entryPoint: 'main',
+                module: this.graphicsShaderModule,
+                entryPoint: 'fragmentMain',
                 targets: [{
                     format: this.format
                 }]
             },
             primitive: {
-                topology: 'point-list'
+                topology: 'triangle-list'
             }
         });
 
@@ -102,7 +99,7 @@ export class WebGPURenderer implements IRenderer {
 
     private createBuffers() {
         const PARTICLE_SIZE = 16; // 4 floats * 4 bytes
-        const bufferSize = this.PARTICLE_COUNT * PARTICLE_SIZE;
+        const bufferSize = this.particleCount * PARTICLE_SIZE;
 
         this.particleBufferA = this.device.createBuffer({
             size: bufferSize,
@@ -115,8 +112,8 @@ export class WebGPURenderer implements IRenderer {
         });
 
         // Initialize particles
-        const initialData = new Float32Array(this.PARTICLE_COUNT * 4);
-        for (let i = 0; i < this.PARTICLE_COUNT; i++) {
+        const initialData = new Float32Array(this.particleCount * 4);
+        for (let i = 0; i < this.particleCount; i++) {
             initialData[i * 4] = Math.random();
             initialData[i * 4 + 1] = Math.random();
             initialData[i * 4 + 2] = (Math.random() - 0.5) * 0.01;
@@ -165,6 +162,10 @@ export class WebGPURenderer implements IRenderer {
     }
 
     update() {
+        // Get texture first, before creating encoder
+        const currentTexture = this.context.getCurrentTexture();
+        const textureView = currentTexture.createView();
+
         const encoder = this.device.createCommandEncoder();
 
         // Compute pass
@@ -172,12 +173,11 @@ export class WebGPURenderer implements IRenderer {
         computePass.setPipeline(this.computePipeline);
         computePass.setBindGroup(0, this.useBufferA ? this.bindGroupA : this.bindGroupB);
 
-        const workgroupCount = Math.ceil(this.PARTICLE_COUNT / 64);
+        const workgroupCount = Math.ceil(this.particleCount / 64);
         computePass.dispatchWorkgroups(workgroupCount);
         computePass.end();
 
         // Render pass
-        const textureView = this.context.getCurrentTexture().createView();
         const renderPass = encoder.beginRenderPass({
             colorAttachments: [{
                 view: textureView,
@@ -190,7 +190,7 @@ export class WebGPURenderer implements IRenderer {
         renderPass.setPipeline(this.renderPipeline);
         const currentBuffer = this.useBufferA ? this.particleBufferB : this.particleBufferA;
         renderPass.setVertexBuffer(0, currentBuffer);
-        renderPass.draw(1, this.PARTICLE_COUNT);
+        renderPass.draw(6, this.particleCount);
         renderPass.end();
 
         this.device.queue.submit([encoder.finish()]);
@@ -199,11 +199,18 @@ export class WebGPURenderer implements IRenderer {
     }
 
     animate(){
+        
         this.update();
-        requestAnimationFrame(() => this.animate());
+        this.animationFrameId = requestAnimationFrame(() => this.animate());
+        
     }
 
-    stop(): void {
+    stop = () => {
+        
+        if (this.animationFrameId !== null) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
     }
 
     start() {
@@ -213,8 +220,18 @@ export class WebGPURenderer implements IRenderer {
                 this.animate();
             });
         }
+        else {
+            this.animate();
+        }
     }
+    
 
-    destroy() {
+    destroy= () => {
+        this.stop();
+        this.device?.destroy();
+        this.particleBufferA?.destroy();
+        this.particleBufferB?.destroy();
+        this.context?.unconfigure();
+        
     }
 }

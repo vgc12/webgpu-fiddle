@@ -1,7 +1,7 @@
 // WebGPUCanvas.tsx - React component that owns WebGPU
 import React, {useEffect, useRef} from 'react';
-import {Panel} from './Panel';
-import {WebGPURenderer} from "@/webgpu-renderer.tsx";
+import {Panel} from './panel.tsx';
+import {WebGPURenderer} from "@/components/graphics/webgpu-renderer.tsx";
 
 interface WebGPUCanvasProps {
     width?: number;
@@ -21,12 +21,11 @@ export const WebGPUCanvas : React.FC<WebGPUCanvasProps> = ({
        useEffect(() => {
            if (!canvasRef.current) return;
 
-            const renderer = new WebGPURenderer(canvasRef.current);
+           const renderer = new WebGPURenderer(canvasRef.current);
            rendererRef.current = renderer;
            renderer.start();
            // Cleanup when component unmounts
            return () => {
-               renderer.stop();
                renderer.destroy();
            };
        }, []); // Empty deps = run once on mount

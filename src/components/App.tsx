@@ -1,5 +1,5 @@
-import './App.css'
-import {WebGPUCanvas} from "@/main-canvas.tsx";
+import '../App.css'
+import {WebGPUCanvas} from "@/components/ui/main-canvas.tsx";
 
 
 
