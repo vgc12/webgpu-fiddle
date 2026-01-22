@@ -1,4 +1,4 @@
-import '../App.css'
+import '../style.css'
 import {WebGPUCanvas} from "@/components/ui/main-canvas.tsx";
 
 

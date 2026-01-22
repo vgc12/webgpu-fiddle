@@ -2,7 +2,8 @@
 import React, {useEffect, useRef} from 'react';
 import {Panel} from './panel.tsx';
 import {WebGPURenderer} from "@/components/graphics/webgpu-renderer.tsx";
-
+import graphicsShader from "@/shaders/graphics.wgsl";
+import computeShader from "@/shaders/compute.wgsl";
 interface WebGPUCanvasProps {
     width?: number;
     height?: number;
@@ -19,39 +20,30 @@ export const WebGPUCanvas : React.FC<WebGPUCanvasProps> = ({
 
        // Initialize WebGPU once when component mounts
        useEffect(() => {
-           if (!canvasRef.current) return;
+           if (!canvasRef.current || rendererRef.current) return;
 
-           const renderer = new WebGPURenderer(canvasRef.current);
+           const renderer = new WebGPURenderer(canvasRef.current, {
+               computeShader: computeShader, graphicsShader: graphicsShader
+           },
+               {
+                   count: 2000,
+                   particleStructSize: 16,
+                   workgroupSize: 64,
+                   initialVelocityRange: 0.02
+               });
            rendererRef.current = renderer;
-           renderer.start();
-           // Cleanup when component unmounts
+           renderer.start().catch(err => {
+               console.error('Failed to start WebGPU renderer:', err);
+           });
+           
            return () => {
                renderer.destroy();
            };
        }, []); // Empty deps = run once on mount
-
-
-/*
-    // Update shader code when it changes
-    useEffect(() => {
-        if (!rendererRef.current) return;
-
-        try {
-            rendererRef.current.updateShaders(computeCode, fragmentCode, mode);
-        } catch (err) {
-            console.error('Shader compilation failed:', err);
-        }
-    }, [computeCode, fragmentCode, mode]);
-
-    // Update particle count when it changes
-    useEffect(() => {
-        if (!rendererRef.current) return;
-        rendererRef.current.setParticleCount(particleCount);
-    }, [particleCount]);
-*/
+    
     return (
-        <Panel grow={true} className={' p-2 w-[65vw] h-[90vh]'}>
-            <canvas className={' rounded-md w-[100%] h-[100%]'}
+        <Panel grow={true} className={'w-[66vw] h-[90vh]'}>
+            <canvas className={'rounded-md w-[100%] h-[100%]'}
                     ref={canvasRef}
                     width={width}
                     height={height}
