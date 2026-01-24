@@ -1,26 +1,28 @@
-﻿import {ComputePipelineBuilder} from "@/components/graphics/compute-pipeline-builder.tsx";
-import {RenderPipelineBuilder} from "@/components/graphics/render-pipeline-builder.tsx";
-import type {IFactory} from "@/components/graphics/i-factory.tsx";
+﻿import {ComputePipelineBuilder} from "@/graphics/compute-pipeline-builder.tsx";
+import {RenderPipelineBuilder} from "@/graphics/render-pipeline-builder.tsx";
+import type {IFactory} from "@/graphics/i-factory.tsx";
 
 // Move abstract class BEFORE implementations
 export abstract class RenderPipelineFactory implements IFactory<GPURenderPipeline> {
     protected constructor(
         protected device: GPUDevice,
-    ) {}
+    ) {
+    }
 
     abstract create(): GPURenderPipeline;
 }
 
-export abstract class ComputePipelineFactory implements IFactory<GPUComputePipeline>{
+export abstract class ComputePipelineFactory implements IFactory<GPUComputePipeline> {
     protected constructor(
         protected device: GPUDevice,
-    ) {}
+    ) {
+    }
 
     abstract create(): GPUComputePipeline;
 }
 
 export class ParticleRenderPipelineFactory extends RenderPipelineFactory {
-    constructor(device: GPUDevice, private format: GPUTextureFormat, private shader: GPUShaderModule) {
+    constructor(device: GPUDevice, private format: GPUTextureFormat, private shader: GPUShaderModule, private pipelineLayout?: GPUPipelineLayout) {
         super(device); // Call parent constructor with device
     }
 
@@ -28,12 +30,12 @@ export class ParticleRenderPipelineFactory extends RenderPipelineFactory {
         return new RenderPipelineBuilder(this.device, this.format);
     }
 
-    
 
     // Implement abstract method
     create(): GPURenderPipeline {
         return this.createRenderPipelineBuilder()
             .setShaderModule(this.shader)
+            .setLayout(this.pipelineLayout || 'auto')
             .setVertexEntryPoint('vertexMain')
             .setFragmentEntryPoint('fragmentMain')
             .addVertexBuffer({
@@ -58,18 +60,19 @@ export class ParticleRenderPipelineFactory extends RenderPipelineFactory {
 }
 
 export class ComputeParticlePipelineFactory extends ComputePipelineFactory {
-    constructor( device: GPUDevice, private shaderModule: GPUShaderModule,) {
+    constructor(device: GPUDevice, private shaderModule: GPUShaderModule, private pipelineLayout?: GPUPipelineLayout) {
         super(device); // Call parent constructor, no extra params
     }
 
     createComputePipelineBuilder(): ComputePipelineBuilder {
         return new ComputePipelineBuilder(this.device);
     }
-    
-    public create(): GPUComputePipeline{
+
+    public create(): GPUComputePipeline {
         return this.createComputePipelineBuilder()
             .setShaderModule(this.shaderModule)
-            .setEntryPoint('main')
+            .setLayout(this.pipelineLayout || 'auto')
+            .setEntryPoint('computeMain')
             .build();
     }
 }

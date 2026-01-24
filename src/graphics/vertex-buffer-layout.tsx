@@ -1,4 +1,4 @@
-﻿import type {VertexAttribute} from "@/components/graphics/vertex-attribute.tsx";
+﻿import type {VertexAttribute} from "@/graphics/vertex-attribute.tsx";
 
 export interface VertexBufferLayout {
     arrayStride: number;

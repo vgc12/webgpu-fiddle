@@ -28,17 +28,17 @@
         });
     }
 
-    getDevice(): GPUDevice {
+    get Device(): GPUDevice {
         if (!this.device) throw new Error('Device not initialized');
         return this.device;
     }
 
-    getContext(): GPUCanvasContext {
+    get Context(): GPUCanvasContext {
         if (!this.context) throw new Error('Context not initialized');
         return this.context;
     }
 
-    getFormat(): GPUTextureFormat {
+    get Format(): GPUTextureFormat {
         return this.format;
     }
 

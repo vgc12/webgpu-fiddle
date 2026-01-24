@@ -32,7 +32,7 @@ export default defineConfig(({}) =>
 
 
     optimizeDeps: {
-      include: ['react', 'react-dom', 'react-icons', 'react-icons/*'],
+      include: ['react', 'react-dom', 'react-icons', 'react-icons/*', 'monaco-editor'],
     }
   }
 });
