@@ -10,6 +10,8 @@ export abstract class RenderPipelineFactory implements IFactory<GPURenderPipelin
     }
 
     abstract create(): GPURenderPipeline;
+
+    abstract createAsync(): Promise<GPURenderPipeline>;
 }
 
 export abstract class ComputePipelineFactory implements IFactory<GPUComputePipeline> {
@@ -19,6 +21,8 @@ export abstract class ComputePipelineFactory implements IFactory<GPUComputePipel
     }
 
     abstract create(): GPUComputePipeline;
+
+    abstract createAsync(): Promise<GPUComputePipeline>;
 }
 
 export class ParticleRenderPipelineFactory extends RenderPipelineFactory {
@@ -30,32 +34,57 @@ export class ParticleRenderPipelineFactory extends RenderPipelineFactory {
         return new RenderPipelineBuilder(this.device, this.format);
     }
 
+    public create(): GPURenderPipeline {
+        return this.createRenderPipelineBuilder()
+                   .setShaderModule(this.shader)
+                   .setLayout(this.pipelineLayout || 'auto')
+                   .setVertexEntryPoint('vertexMain')
+                   .setFragmentEntryPoint('fragmentMain')
+                   .addVertexBuffer({
+                       arrayStride: 16,
+                       stepMode: 'instance',
+                       attributes: [
+                           {
+                               shaderLocation: 0,
+                               offset: 0,
+                               format: 'float32x2'
+                           },
+                           {
+                               shaderLocation: 1,
+                               offset: 8,
+                               format: 'float32x2'
+                           }
+                       ]
+                   })
+                   .setTopology('triangle-list')
+                   .build();
+    }
 
     // Implement abstract method
-    create(): GPURenderPipeline {
+    createAsync(): Promise<GPURenderPipeline> {
         return this.createRenderPipelineBuilder()
-            .setShaderModule(this.shader)
-            .setLayout(this.pipelineLayout || 'auto')
-            .setVertexEntryPoint('vertexMain')
-            .setFragmentEntryPoint('fragmentMain')
-            .addVertexBuffer({
-                arrayStride: 16,
-                stepMode: 'instance',
-                attributes: [
-                    {
-                        shaderLocation: 0,
-                        offset: 0,
-                        format: 'float32x2'
-                    },
-                    {
-                        shaderLocation: 1,
-                        offset: 8,
-                        format: 'float32x2'
-                    }
-                ]
-            })
-            .setTopology('triangle-list')
-            .build();
+                   .setShaderModule(this.shader)
+                   .setLayout(this.pipelineLayout || 'auto')
+                   .setVertexEntryPoint('vertexMain')
+                   .setFragmentEntryPoint('fragmentMain')
+                   .addVertexBuffer({
+                       arrayStride: 16,
+                       stepMode: 'instance',
+                       attributes: [
+                           {
+                               shaderLocation: 0,
+                               offset: 0,
+                               format: 'float32x2'
+                           },
+                           {
+                               shaderLocation: 1,
+                               offset: 8,
+                               format: 'float32x2'
+                           }
+                       ]
+                   })
+                   .setTopology('triangle-list')
+                   .buildAsync();
     }
 }
 
@@ -70,9 +99,17 @@ export class ComputeParticlePipelineFactory extends ComputePipelineFactory {
 
     public create(): GPUComputePipeline {
         return this.createComputePipelineBuilder()
-            .setShaderModule(this.shaderModule)
-            .setLayout(this.pipelineLayout || 'auto')
-            .setEntryPoint('computeMain')
-            .build();
+                   .setShaderModule(this.shaderModule)
+                   .setLayout(this.pipelineLayout || 'auto')
+                   .setEntryPoint('computeMain')
+                   .build();
+    }
+
+    createAsync(): Promise<GPUComputePipeline> {
+        return this.createComputePipelineBuilder()
+                   .setShaderModule(this.shaderModule)
+                   .setLayout(this.pipelineLayout || 'auto')
+                   .setEntryPoint('computeMain')
+                   .buildAsync();
     }
 }

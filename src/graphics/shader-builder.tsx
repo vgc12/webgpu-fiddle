@@ -21,17 +21,25 @@ export function getDefaultParticleFragmentShader(): string {
     return defaultParticleFragmentCompute;
 }
 
+export function getUniformDefinitions(): string {
+    return `
+    let resolution : vec2<f32> = uniforms.resolution;
+    let aspectRatio : f32 = uniforms.aspectRatio;
+    let time : f32 = uniforms.time;
+    `
+}
+
 
 /**
  * Configuration options for the ShaderBuilder
  */
-export const ShaderType = {
-    compute: 0,
-    vertex: 1,
-    fragment: 2
+export const shader_type = {
+    COMPUTE: 'compute',
+    VERTEX: 'vertex',
+    FRAGMENT: 'fragment'
 } as const;
 
-export type ShaderType = typeof ShaderType[keyof typeof ShaderType];
+export type ShaderType = typeof shader_type[keyof typeof shader_type];
 
 export interface ShaderBuilderOptions {
     /** Whether to automatically include the uniforms WGSL code. Defaults to true */
@@ -160,7 +168,7 @@ export class ShaderBuilder {
      */
     buildCompute(userCode: string, workgroupSize = {x: 64, y: 1, z: 1}): string {
         const ws = this.options.computeWorkgroupSize || workgroupSize;
-        const bodyCode = extractFunctionBody(userCode);
+        const bodyCode = getUniformDefinitions() + extractFunctionBody(userCode);
         const varMap = getComputeVariableMap();
 
         // Build parameter list from variable map
@@ -242,8 +250,8 @@ ${this.indentCode(bodyCode, 1)}
         const varMap = getFragmentVariableMap();
 
         const returnType = outs.length === 1
-            ? `@location(${outs[0].location}) ${outs[0].type}`
-            : `@location(0) vec4<f32>`;
+                           ? `@location(${outs[0].location}) ${outs[0].type}`
+                           : `@location(0) vec4<f32>`;
 
         // Build parameter list
         const params = Array.from(varMap.parameterMap.values()).join(',\n    ');
@@ -276,8 +284,8 @@ ${this.indentCode(bodyCode, 1)}
      */
     buildVertexFragment(vertexCode: string, fragmentCode: string, attributes?: VertexAttribute[]): string {
         const attrs = attributes || this.options.vertexAttributes || [];
-        const vertexBody = extractFunctionBody(vertexCode);
-        const fragmentBody = extractFunctionBody(fragmentCode);
+        const vertexBody = getUniformDefinitions() + extractFunctionBody(vertexCode);
+        const fragmentBody = getUniformDefinitions() + extractFunctionBody(fragmentCode);
 
         const vertexVarMap = getVertexVariableMap(attrs);
         const fragmentVarMap = getFragmentVariableMap();

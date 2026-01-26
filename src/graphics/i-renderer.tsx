@@ -1,7 +1,11 @@
-﻿export interface IRenderer {
+﻿import type {ShaderConfig} from "@/graphics/shader-config.tsx";
+
+export interface IRenderer {
     start(): void;
 
     stop(): void;
+
+    recompileShaders(newShaderConfig: ShaderConfig): Promise<void>;
 
     destroy(): void;
 }

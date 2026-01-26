@@ -1,6 +1,23 @@
 ﻿/**
  * Generate documentation/hints for Monaco editor
  */
+
+/*struct Uniforms {
+    resolution : vec2f,
+        aspectRatio: f32,
+        time: f32,
+}*/
+
+function generateUniformDocumentation() {
+    const lines: string[] = [
+        '\n\n// Available uniform variables in your shader:',
+        '// resolution: vec2<f32> - The resolution of the output (width, height)',
+        '// aspectRatio: f32 - The aspect ratio of the output (width / height)',
+        '// time: f32 - The elapsed time in seconds since the start of the program',
+    ];
+    return lines.join('\n');
+}
+
 export function generateVariableDocumentation(shaderType: 'compute' | 'vertex' | 'fragment'): string {
     const lines: string[] = ['// Available variables in your main() function:'];
 
@@ -18,6 +35,8 @@ export function generateVariableDocumentation(shaderType: 'compute' | 'vertex' |
         lines.push('// fragCoord: vec4<f32> - Fragment coordinates');
         lines.push('// Return: vec4<f32> - Output color for this fragment');
     }
+
+    lines.push(generateUniformDocumentation() + '\n\n');
 
     return lines.join('\n');
 }

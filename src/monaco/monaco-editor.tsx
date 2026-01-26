@@ -1,6 +1,36 @@
-﻿import {useEffect, useRef, useState} from 'react';
+﻿import {useEffect, useRef} from 'react';
 import * as monaco from 'monaco-editor';
 import {cn} from '@/utils/utils';
+import {ButtonLightRectangle} from "@/components/ui/button.tsx";
+
+import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
+import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
+import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
+import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
+import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
+
+// Configure Monaco Editor workers
+self.MonacoEnvironment = {
+    getWorker(_: string, label: string) {
+        switch (label) {
+            case 'json':
+                return new jsonWorker();
+            case 'css':
+            case 'scss':
+            case 'less':
+                return new cssWorker();
+            case 'html':
+            case 'handlebars':
+            case 'razor':
+                return new htmlWorker();
+            case 'typescript':
+            case 'javascript':
+                return new tsWorker();
+            default:
+                return new editorWorker();
+        }
+    }
+};
 
 export interface Tab {
     id: string;
@@ -14,7 +44,6 @@ interface MonacoEditorProps {
     height?: string;
     className?: string;
     tabs?: Tab[];
-    activeTabId?: string;
     onTabChange?: (tabId: string) => void;
 }
 
@@ -24,16 +53,15 @@ export function MonacoEditor({
                                  onChange,
                                  className,
                                  tabs,
-                                 activeTabId,
                                  onTabChange
                              }: MonacoEditorProps) {
-    const [activeTab, setActiveTab] = useState(activeTabId || tabs?.[0]?.id);
     const editorRef = useRef<HTMLDivElement>(null);
     const monacoRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+    const isUpdatingFromProp = useRef(false);
+    const disposableRef = useRef<monaco.IDisposable | null>(null);
 
     useEffect(() => {
-        if (editorRef.current) {
-            // Create editor
+        if (editorRef.current && !monacoRef.current) {
             monacoRef.current = monaco.editor.create(editorRef.current, {
                 value,
                 language,
@@ -45,27 +73,46 @@ export function MonacoEditor({
                 fontSize: 14,
             });
 
-            // Listen for changes
-            const disposable = monacoRef.current.onDidChangeModelContent(() => {
-                onChange?.(monacoRef.current!.getValue());
+            disposableRef.current = monacoRef.current.onDidChangeModelContent(() => {
+                if (!isUpdatingFromProp.current && monacoRef.current) {
+                    onChange?.(monacoRef.current.getValue());
+                }
             });
-
-            // Cleanup
-            return () => {
-                disposable.dispose();
-                monacoRef.current?.dispose();
-            };
         }
+
+        return () => {
+            if (disposableRef.current) {
+                try {
+                    disposableRef.current.dispose();
+                }
+                catch (e) {
+                    // Ignore cancellation errors during cleanup
+                }
+                disposableRef.current = null;
+            }
+
+            if (monacoRef.current) {
+                try {
+                    monacoRef.current.dispose();
+                }
+                catch (e) {
+                    // Ignore cancellation errors during cleanup
+                }
+                monacoRef.current = null;
+            }
+        };
     }, []);
 
-    // Update value when prop changes
     useEffect(() => {
         if (monacoRef.current && monacoRef.current.getValue() !== value) {
+            isUpdatingFromProp.current = true;
             monacoRef.current.setValue(value);
+            setTimeout(() => {
+                isUpdatingFromProp.current = false;
+            }, 0);
         }
     }, [value]);
 
-    // Update language when prop changes
     useEffect(() => {
         if (monacoRef.current) {
             const model = monacoRef.current.getModel();
@@ -76,37 +123,26 @@ export function MonacoEditor({
     }, [language]);
 
     const handleTabClick = (tabId: string) => {
-        setActiveTab(tabId);
         onTabChange?.(tabId);
     };
 
-    // If no tabs, render just the editor
     if (!tabs || tabs.length === 0) {
         return <div ref={editorRef} className={className}/>;
     }
 
-    // With tabs
     return (
         <div className={cn('flex flex-col h-full', className)}>
-            {/* Tab Bar */}
             <div className="flex gap-1 bg-gray-900 border-b border-gray-700 px-2 pt-2">
                 {tabs.map(tab => (
-                    <button
+                    <ButtonLightRectangle
                         key={tab.id}
                         onClick={() => handleTabClick(tab.id)}
-                        className={cn(
-                            'px-4 py-2 rounded-t-lg text-sm font-medium transition-colors',
-                            activeTab === tab.id
-                                ? 'bg-gray-800 text-white'
-                                : 'bg-gray-900 text-gray-400 hover:text-white hover:bg-gray-800/50'
-                        )}
+                        className={cn()}
                     >
                         {tab.label}
-                    </button>
+                    </ButtonLightRectangle>
                 ))}
             </div>
-
-            {/* Editor */}
             <div ref={editorRef} className="flex-1"/>
         </div>
     );

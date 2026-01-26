@@ -1,10 +1,12 @@
 // WebGPUCanvas.tsx - React component that owns WebGPU
 import React, {useEffect, useRef} from 'react';
-import {WebGPURenderer} from "@/graphics/webgpu-renderer.tsx";
+import {ParticleRenderer} from "@/graphics/webgpu-renderer.tsx";
+import type {IRenderer} from "@/graphics/i-renderer.tsx";
 
 interface WebGPUCanvasProps {
     width?: number;
     height?: number;
+    rendererRef?: React.RefObject<IRenderer | null>;
     computeShader?: string;
     graphicsShader?: string;
     children?: React.ReactNode;
@@ -13,17 +15,20 @@ interface WebGPUCanvasProps {
 export const WebGPUCanvas: React.FC<WebGPUCanvasProps> = ({
                                                               width = 1920,
                                                               height = 1080,
+                                                              rendererRef,
                                                               computeShader = '',
                                                               graphicsShader = '',
                                                           }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const rendererRef = useRef<WebGPURenderer | null>(null);
+
 
     // Initialize WebGPU once when component mounts
     useEffect(() => {
-        if (!canvasRef.current || rendererRef.current) return;
+        if (!canvasRef.current || !rendererRef || rendererRef.current) {
+            return;
+        }
 
-        const renderer = new WebGPURenderer(canvasRef.current, {
+        const renderer = new ParticleRenderer(canvasRef.current, {
                 computeShader: computeShader, graphicsShader: graphicsShader
             },
             {
@@ -41,6 +46,7 @@ export const WebGPUCanvas: React.FC<WebGPUCanvasProps> = ({
             renderer.destroy();
         };
     }, []); // Empty deps = run once on mount
+
 
     return (
 

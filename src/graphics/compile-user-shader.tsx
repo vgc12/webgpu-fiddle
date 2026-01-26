@@ -1,4 +1,4 @@
-﻿import {ShaderBuilder, ShaderType, type VertexAttribute} from "@/graphics/shader-builder.tsx";
+﻿import {ShaderBuilder, type ShaderType, type VertexAttribute} from "@/graphics/shader-builder.tsx";
 import {extractFunctionBody} from "@/graphics/extract-function-body.tsx";
 
 /**
@@ -34,7 +34,7 @@ export function compileUserShader(
 ): string {
     const builder = new ShaderBuilder();
 
-    if (shaderType === ShaderType.compute) {
+    if (shaderType === 'compute') {
         builder.addStructs(`
 struct Particle {
     position: vec2<f32>,
@@ -51,7 +51,7 @@ struct Particle {
         return builder.buildCompute(extractFunctionBody(userCode));
     }
 
-    if (shaderType === ShaderType.vertex) {
+    if (shaderType === 'vertex') {
         const attributes: VertexAttribute[] = [
             {location: 0, name: 'particlePos', type: 'vec2<f32>'},
             {location: 1, name: 'particleVel', type: 'vec2<f32>'},
@@ -60,14 +60,14 @@ struct Particle {
         if (vertexCode && fragmentCode) {
             // Build combined vertex + fragment shader
             builder.addStructs(`
-const squareArray: array<vec2f, 6> = array<vec2f, 6>(
-    vec2f(-0.1, -0.1),
-    vec2f(-0.1,  0.1),
-    vec2f( 0.1, -0.1),
-    vec2f( 0.1, -0.1),
-    vec2f(-0.1,  0.1),
-    vec2f( 0.1,  0.1)
-);
+        const squareArray: array<vec2f, 6> = array<vec2f, 6>(
+            vec2f(-0.1, -0.1),
+            vec2f(-0.1,  0.1),
+            vec2f( 0.1, -0.1),
+            vec2f( 0.1, -0.1),
+            vec2f(-0.1,  0.1),
+            vec2f( 0.1,  0.1)
+        );
     `);
 
             return builder.buildVertexFragment(extractFunctionBody(vertexCode), extractFunctionBody(fragmentCode), attributes);
@@ -77,7 +77,7 @@ const squareArray: array<vec2f, 6> = array<vec2f, 6>(
         return builder.buildVertex(userCode, attributes);
     }
 
-    if (shaderType === ShaderType.fragment) {
+    if (shaderType === 'fragment') {
         return builder.buildFragment(userCode);
     }
 

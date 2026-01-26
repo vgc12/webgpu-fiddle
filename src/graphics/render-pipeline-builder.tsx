@@ -54,6 +54,30 @@ export class RenderPipelineBuilder {
         return this;
     }
 
+    buildAsync(): Promise<GPURenderPipeline> {
+        if (!this.shaderModule) {
+            throw new Error('Shader module is required for render pipeline');
+        }
+
+        return this.device.createRenderPipelineAsync({
+            layout: this.layout,
+            vertex: {
+                module: this.shaderModule,
+                entryPoint: this.vertexEntryPoint,
+                buffers: this.vertexBuffers
+            },
+            fragment: {
+                module: this.shaderModule,
+                entryPoint: this.fragmentEntryPoint,
+                targets: [{format: this.format}]
+            },
+            primitive: {
+                topology: this.topology,
+                cullMode: this.cullMode
+            }
+        });
+    }
+
     build(): GPURenderPipeline {
         if (!this.shaderModule) {
             throw new Error('Shader module is required for render pipeline');

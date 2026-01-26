@@ -34,4 +34,17 @@
             }
         });
     }
+
+    buildAsync(): Promise<GPUComputePipeline> {
+        if (!this.shaderModule) {
+            throw new Error('Shader module is required for compute pipeline');
+        }
+        return this.device.createComputePipelineAsync({
+            layout: this.layout,
+            compute: {
+                module: this.shaderModule,
+                entryPoint: this.entryPoint
+            }
+        });
+    }
 }
