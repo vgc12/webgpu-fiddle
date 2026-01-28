@@ -1,5 +1,6 @@
 ﻿export type ShaderConfig = {
     computeShader: string;
-    graphicsShader: string;
- 
+    vertexShader: string;
+    fragmentShader: string;
+
 }

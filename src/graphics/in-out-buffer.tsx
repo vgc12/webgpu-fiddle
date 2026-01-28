@@ -1,5 +1,5 @@
 ﻿import {GPUResourceManager} from "@/graphics/gpu-resource-manager.tsx";
-import type {ParticleConfig} from "@/graphics/particle-config.tsx";
+import type {ComputeConfig} from "@/graphics/compute-config.tsx";
 
 export interface IBufferSystem {
     initializeBuffers(): void;
@@ -34,7 +34,7 @@ export class UniformBuffer implements IBufferSystem {
     }
 }
 
-export class ParticleComputeBuffer implements IBufferSystem {
+export class InOutBuffer implements IBufferSystem {
     private bufferA: GPUBuffer;
     private bufferB: GPUBuffer;
     private useBufferA: boolean = true;
@@ -42,7 +42,7 @@ export class ParticleComputeBuffer implements IBufferSystem {
     constructor(
         private device: GPUDevice,
         private resourceManager: GPUResourceManager,
-        private config: ParticleConfig
+        private config: ComputeConfig
     ) {
         this.initializeBuffers();
     }
@@ -61,7 +61,10 @@ export class ParticleComputeBuffer implements IBufferSystem {
     }
 
     initializeBuffers(): void {
-        const bufferSize = this.config.count * this.config.particleStructSize;
+        if (this.config.inOutBufferStruct == null) {
+            throw new Error("The buffer struct could not be found in the compute shader!");
+        }
+        const bufferSize = this.config.count * this.config.inOutBufferStruct.size;
         const usage = GPUBufferUsage.STORAGE |
             GPUBufferUsage.COPY_DST |
             GPUBufferUsage.COPY_SRC |

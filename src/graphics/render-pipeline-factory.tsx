@@ -26,7 +26,10 @@ export abstract class ComputePipelineFactory implements IFactory<GPUComputePipel
 }
 
 export class ParticleRenderPipelineFactory extends RenderPipelineFactory {
-    constructor(device: GPUDevice, private format: GPUTextureFormat, private shader: GPUShaderModule, private pipelineLayout?: GPUPipelineLayout) {
+    constructor(device: GPUDevice, private format: GPUTextureFormat,
+                private vertexShader: GPUShaderModule,
+                private fragmentShader: GPUShaderModule,
+                private pipelineLayout?: GPUPipelineLayout) {
         super(device); // Call parent constructor with device
     }
 
@@ -36,26 +39,11 @@ export class ParticleRenderPipelineFactory extends RenderPipelineFactory {
 
     public create(): GPURenderPipeline {
         return this.createRenderPipelineBuilder()
-                   .setShaderModule(this.shader)
+                   .setVertexShaderModule(this.vertexShader)
+                   .setFragmentShaderModule(this.fragmentShader)
                    .setLayout(this.pipelineLayout || 'auto')
                    .setVertexEntryPoint('vertexMain')
                    .setFragmentEntryPoint('fragmentMain')
-                   .addVertexBuffer({
-                       arrayStride: 16,
-                       stepMode: 'instance',
-                       attributes: [
-                           {
-                               shaderLocation: 0,
-                               offset: 0,
-                               format: 'float32x2'
-                           },
-                           {
-                               shaderLocation: 1,
-                               offset: 8,
-                               format: 'float32x2'
-                           }
-                       ]
-                   })
                    .setTopology('triangle-list')
                    .build();
     }
@@ -63,26 +51,11 @@ export class ParticleRenderPipelineFactory extends RenderPipelineFactory {
     // Implement abstract method
     createAsync(): Promise<GPURenderPipeline> {
         return this.createRenderPipelineBuilder()
-                   .setShaderModule(this.shader)
+                   .setVertexShaderModule(this.vertexShader)
+                   .setFragmentShaderModule(this.fragmentShader)
                    .setLayout(this.pipelineLayout || 'auto')
                    .setVertexEntryPoint('vertexMain')
                    .setFragmentEntryPoint('fragmentMain')
-                   .addVertexBuffer({
-                       arrayStride: 16,
-                       stepMode: 'instance',
-                       attributes: [
-                           {
-                               shaderLocation: 0,
-                               offset: 0,
-                               format: 'float32x2'
-                           },
-                           {
-                               shaderLocation: 1,
-                               offset: 8,
-                               format: 'float32x2'
-                           }
-                       ]
-                   })
                    .setTopology('triangle-list')
                    .buildAsync();
     }

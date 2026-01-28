@@ -7,5 +7,7 @@ export interface IRenderer {
 
     recompileShaders(newShaderConfig: ShaderConfig): Promise<void>;
 
+    recompileShaders(newShaderConfig: ShaderConfig, options?: any): Promise<void>;
+
     destroy(): void;
 }

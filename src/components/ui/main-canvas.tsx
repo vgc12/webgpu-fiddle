@@ -2,13 +2,15 @@
 import React, {useEffect, useRef} from 'react';
 import {ParticleRenderer} from "@/graphics/webgpu-renderer.tsx";
 import type {IRenderer} from "@/graphics/i-renderer.tsx";
+import {getStructFromBufferBinding} from "@/graphics/shader-builder.tsx";
 
 interface WebGPUCanvasProps {
     width?: number;
     height?: number;
     rendererRef?: React.RefObject<IRenderer | null>;
     computeShader?: string;
-    graphicsShader?: string;
+    vertexShader?: string;
+    fragmentShader?: string;
     children?: React.ReactNode;
 }
 
@@ -17,7 +19,8 @@ export const WebGPUCanvas: React.FC<WebGPUCanvasProps> = ({
                                                               height = 1080,
                                                               rendererRef,
                                                               computeShader = '',
-                                                              graphicsShader = '',
+                                                              vertexShader = '',
+                                                              fragmentShader = '',
                                                           }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -29,13 +32,12 @@ export const WebGPUCanvas: React.FC<WebGPUCanvasProps> = ({
         }
 
         const renderer = new ParticleRenderer(canvasRef.current, {
-                computeShader: computeShader, graphicsShader: graphicsShader
+                computeShader: computeShader, vertexShader: vertexShader, fragmentShader: fragmentShader,
             },
             {
-                count: 2000,
-                particleStructSize: 16,
-                workgroupSize: 64,
-                initialVelocityRange: 0.02
+                count: 32,
+                inOutBufferStruct: getStructFromBufferBinding(computeShader, 'input'),
+                workgroupSize: [64, 1, 1],
             });
         rendererRef.current = renderer;
         renderer.start().catch(err => {

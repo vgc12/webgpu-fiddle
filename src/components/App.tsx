@@ -6,14 +6,15 @@ import {registerWGSL} from "@/monaco/registerWGSL.tsx";
 import {Panel} from "@/components/ui/panel.tsx";
 import {ButtonLightRectangle} from "@/components/ui/button.tsx";
 
-import {createRenderShader} from "@/graphics/create-render-shader.tsx";
+
 import {
     getDefaultParticleComputeShader,
     getDefaultParticleFragmentShader,
     getDefaultParticleVertexShader,
-    type ShaderType
+    getStructFromBufferBinding,
+    getWorkgroupSize,
+    injectUniformsIntoShader
 } from "@/graphics/shader-builder.tsx";
-import {createComputeShader} from "@/graphics/create-compute-shader.tsx";
 import {useDarkMode} from "@/components/use-dark-mode.tsx";
 import type {IRenderer} from "@/graphics/i-renderer.tsx";
 import {generateVariableDocumentation} from "@/graphics/generate-variable-documentation.tsx";
@@ -22,17 +23,26 @@ import {generateVariableDocumentation} from "@/graphics/generate-variable-docume
 function App() {
     /*const [isDarkMode, setIsDarkMode] =*/
     useDarkMode();
+    const tab = {
+        compute: 'compute',
+        vertex: 'vertex',
+        fragment: 'fragment',
+    } as const;
 
-    const [activeTab, setActiveTab] = useState<ShaderType>('compute');
+    type tabs = typeof tab[keyof typeof tab];
 
-    const [shaders, setShaders] = useState<Record<ShaderType, string>>({
+    const [activeTab, setActiveTab] = useState<tabs>('compute');
+
+    const [tabs, setTabs] = useState<Record<tabs, string>>({
         'compute': generateVariableDocumentation('compute') + getDefaultParticleComputeShader(),
         'vertex': generateVariableDocumentation('vertex') + getDefaultParticleVertexShader(),
         'fragment': generateVariableDocumentation('fragment') + getDefaultParticleFragmentShader(),
     });
 
-    const [graphicsShader, setGraphicsShader] = useState<string>(createRenderShader(shaders.vertex, shaders.fragment));
-    const [computeShader, setComputeShader] = useState<string>(createComputeShader(shaders.compute));
+    const [vertexShader, setVertexShader] = useState<string>(injectUniformsIntoShader(tabs.vertex));
+    const [fragmentShader, setFragmentShader] = useState<string>(injectUniformsIntoShader(tabs.fragment));
+    const [computeShader, setComputeShader] = useState<string>(injectUniformsIntoShader(tabs.compute));
+
     const rendererRef = useRef<IRenderer | null>(null);
 
     useEffect(() => {
@@ -40,22 +50,34 @@ function App() {
     }, []);
 
     const handleCompileAndApply = async () => {
-        const newGraphicsShader = createRenderShader(shaders.vertex, shaders.fragment);
-        const newComputeShader = createComputeShader(shaders.compute);
 
-        setGraphicsShader(newGraphicsShader);
+        const newVertexShader = injectUniformsIntoShader(tabs.vertex);
+        const newFragmentShader = injectUniformsIntoShader(tabs.fragment);
+        const newComputeShader = injectUniformsIntoShader(tabs.compute);
+
+        const computeStructs = getStructFromBufferBinding(newComputeShader, 'input');
+        const workGroupSize = getWorkgroupSize(newComputeShader);
+        console.log("computeStructs", computeStructs);
+
+        setVertexShader(newVertexShader);
+        setFragmentShader(newFragmentShader);
         setComputeShader(newComputeShader);
 
-        console.log(newGraphicsShader);
+        console.log(newVertexShader);
         console.log(newComputeShader);
 
         // Recompile shaders without reinitializing
         if (rendererRef.current) {
             try {
-                
+
                 await rendererRef.current.recompileShaders({
                     computeShader: newComputeShader,
-                    graphicsShader: newGraphicsShader
+                    vertexShader: newVertexShader,
+                    fragmentShader: newFragmentShader,
+                }, {
+                    count: 32,
+                    inOutBufferStruct: computeStructs,
+                    workgroupSize: workGroupSize,
                 });
                 console.log('Shaders recompiled successfully!');
             }
@@ -70,20 +92,21 @@ function App() {
             <div className={'flex flex-row h-screen w-screen'}>
                 <Panel resizeDirection={"horizontal"} resizable={true} className={'w-[66vw] h-[90vh]'}>
                     <WebGPUCanvas rendererRef={rendererRef} computeShader={computeShader}
-                                  graphicsShader={graphicsShader}></WebGPUCanvas>
+                                  fragmentShader={fragmentShader} vertexShader={vertexShader}></WebGPUCanvas>
                 </Panel>
 
                 <Panel grow={true} resizeDirection={"horizontal"} resizable={true} className={"h-[90vh] mx-3"}>
                     <ButtonLightRectangle value={'Compile & Apply Shaders'} className={'mb-2 w-full'}
                                           onClick={handleCompileAndApply}/>
                     <MonacoEditor
-                        value={shaders[activeTab]}
+                        value={tabs[activeTab]}
                         language="wgsl"
-                        onChange={(value) => setShaders({...shaders, [activeTab]: value})}
+                        onChange={(value) => setTabs({...tabs, [activeTab]: value})}
                         tabs={[
                             {id: 'compute', label: 'Compute'},
                             {id: 'vertex', label: 'Vertex'},
                             {id: 'fragment', label: 'Fragment'},
+                            {id: 'sharedStructs', label: 'Shared Structs'}
                         ]}
                         onTabChange={setActiveTab as (s: string) => void}
 

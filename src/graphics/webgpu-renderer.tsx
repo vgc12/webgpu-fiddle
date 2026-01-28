@@ -1,18 +1,54 @@
 import {ComputeParticlePipelineFactory, ParticleRenderPipelineFactory,} from "@/graphics/render-pipeline-factory.tsx";
-import {ParticleComputeBuffer, UniformBuffer} from "@/graphics/particle-compute-buffer.tsx";
+import {InOutBuffer, UniformBuffer} from "@/graphics/in-out-buffer.tsx";
 
 import {WebGPUContext} from "@/graphics/webgpu-context.tsx";
 import {AnimationController} from "@/graphics/animation-controller.tsx";
 import {GPUResourceManager} from "@/graphics/gpu-resource-manager.tsx";
 import type {IRenderer} from "@/graphics/i-renderer.tsx";
 import type {ShaderConfig} from "@/graphics/shader-config.tsx";
-import type {ParticleConfig} from "@/graphics/particle-config.tsx";
+import type {ComputeConfig} from "@/graphics/compute-config.tsx";
 import {
     ParticleComputeBindGroupManager,
     ParticleRenderBindGroupManager
 } from "@/graphics/particle-compute-bind-group-manager.tsx";
 import type {IFactory} from "@/graphics/i-factory.tsx";
 import {Time} from "@/utils/time.ts";
+
+const MAX_WORKGROUP_COUNT_PER_DIMENSION = 65535; // WebGPU spec minimum guarantee
+const MAX_WORKGROUP_INVOCATIONS = 256; // sizeX × sizeY × sizeZ
+
+function validateAndClampWorkgroupCount(
+    count: [number, number, number],
+    workgroupSize: [number, number, number]
+): [number, number, number] {
+
+    // Validate workgroup size (must be ≤ 256 total invocations)
+    const totalInvocations = workgroupSize[0] * workgroupSize[1] * workgroupSize[2];
+    if (totalInvocations > MAX_WORKGROUP_INVOCATIONS) {
+        throw new Error(
+            `Workgroup size ${workgroupSize} exceeds max invocations (${MAX_WORKGROUP_INVOCATIONS}). ` +
+            `Got ${totalInvocations}.`
+        );
+    }
+
+    // Clamp workgroup count per dimension
+    const clampedCount: [number, number, number] = [
+        Math.min(count[0], MAX_WORKGROUP_COUNT_PER_DIMENSION),
+        Math.min(count[1], MAX_WORKGROUP_COUNT_PER_DIMENSION),
+        Math.min(count[2], MAX_WORKGROUP_COUNT_PER_DIMENSION)
+    ];
+
+    // Warn if clamped
+    if (count[0] !== clampedCount[0] ||
+        count[1] !== clampedCount[1] ||
+        count[2] !== clampedCount[2]) {
+        console.warn(
+            `Workgroup count ${count} exceeds limits, clamped to ${clampedCount}`
+        );
+    }
+
+    return clampedCount;
+}
 
 // BaseWebGPURenderer.ts
 export abstract class BaseWebGPURenderer implements IRenderer {
@@ -53,23 +89,28 @@ export abstract class BaseWebGPURenderer implements IRenderer {
     async initialize(): Promise<void> {
         await this.gpuContext.initialize();
         this.resourceManager = new GPUResourceManager(this.gpuContext.Device);
-        await this.initializeResources();
+        this.initializeResources();
+        await this.createPipelines();
         this.initialized = true;
     }
 
     abstract recompileShaders(newShaderConfig: ShaderConfig): Promise<void>;
 
+    abstract recompileShaders(newShaderConfig: ShaderConfig, options?: any): Promise<void>;
+
     // Abstract methods each renderer must implement
-    protected abstract initializeResources(): Promise<void>;
+    protected abstract initializeResources(): void;
 
     protected abstract update(): void;
 
     protected abstract cleanup(): void;
+
+    protected abstract createPipelines(): Promise<void>;
 }
 
 
 export class ParticleRenderer extends BaseWebGPURenderer {
-    private computeBuffer: ParticleComputeBuffer;
+    private inOutBuffer: InOutBuffer;
     private uniformBuffer: UniformBuffer;
     private computeBindGroupManager: ParticleComputeBindGroupManager;
     private renderBindGroupManager: ParticleRenderBindGroupManager;
@@ -82,44 +123,96 @@ export class ParticleRenderer extends BaseWebGPURenderer {
     constructor(
         canvas: HTMLCanvasElement,
         shaderConfig: ShaderConfig,
-        private particleConfig: ParticleConfig = {
+        private computeConfig: ComputeConfig = {
             count: 1000,
-            particleStructSize: 16,
-            workgroupSize: 64,
-            initialVelocityRange: 0.01
+            inOutBufferStruct: null,
+            workgroupSize: [64, 1, 1]
         },
         resolution?: { width: number, height: number }
     ) {
         super(canvas, shaderConfig, resolution);
     }
 
-    async recompileShaders(newShaderConfig: ShaderConfig): Promise<void> {
+    async recompileShaders(
+        newShaderConfig: ShaderConfig,
+        options?: { computeConfig?: Partial<ComputeConfig> }
+    ): Promise<void> {
         this.shaderConfig = newShaderConfig;
-        this.createPipelines();
-        this.writeInitialParticleData();
+        if (options && options.computeConfig) {
+            this.computeConfig = options.computeConfig as ComputeConfig;
+        }
+        this.initializeResources()
+        await this.createPipelines();
     }
 
-    protected async initializeResources(): Promise<void> {
+    async createPipelines(): Promise<void> {
+        const device = this.gpuContext.Device;
+        const format = this.gpuContext.Format;
+
+        // Create shader modules
+        const computeShaderModule = this.resourceManager.createShaderModule(
+            this.shaderConfig.computeShader,
+            'Particle Update Shader'
+        );
+
+        const vertexShaderModule = this.resourceManager.createShaderModule(
+            this.shaderConfig.vertexShader,
+            'Particle Vertex Shader'
+        );
+
+        const fragmentShaderModule = this.resourceManager.createShaderModule(
+            this.shaderConfig.fragmentShader,
+            'Particle Fragment Shader');
+
+        // Create pipeline layouts
+        const computePipelineLayout = device.createPipelineLayout({
+            bindGroupLayouts: [this.computeBindGroupManager.layout]
+        });
+
+        const renderPipelineLayout = device.createPipelineLayout({
+            bindGroupLayouts: [this.renderBindGroupManager.layout]
+        });
+
+        // Create pipeline factories
+        this.computePipelineFactory = new ComputeParticlePipelineFactory(
+            device,
+            computeShaderModule,
+            computePipelineLayout
+        );
+
+        this.renderPipelineFactory = new ParticleRenderPipelineFactory(
+            device,
+            format,
+            vertexShaderModule,
+            fragmentShaderModule,
+            renderPipelineLayout
+        );
+
+        // Create pipelines
+        this.computePipeline = await this.computePipelineFactory.createAsync();
+        this.renderPipeline = await this.renderPipelineFactory.createAsync();
+    }
+
+    protected initializeResources(): void {
         const device = this.gpuContext.Device;
 
 
-        // Initialize buffers
-        this.computeBuffer = new ParticleComputeBuffer(
+        this.inOutBuffer = new InOutBuffer(
             device,
             this.resourceManager,
-            this.particleConfig
+            this.computeConfig
         );
 
         this.uniformBuffer = new UniformBuffer(device, this.resourceManager);
 
         // Initialize particle data
-        this.writeInitialParticleData();
+        this.writeInitialComputeData();
         this.writeUniformData();
 
         // Create bind group managers
         this.computeBindGroupManager = new ParticleComputeBindGroupManager(
             this.resourceManager,
-            this.computeBuffer,
+            this.inOutBuffer,
             this.uniformBuffer,
             device
         );
@@ -127,14 +220,14 @@ export class ParticleRenderer extends BaseWebGPURenderer {
         this.renderBindGroupManager = new ParticleRenderBindGroupManager(
             this.resourceManager,
             this.uniformBuffer,
+            this.inOutBuffer,
             device
         );
-        await this.createPipelines();
 
     }
 
     protected cleanup(): void {
-        this.computeBuffer?.destroy();
+        this.inOutBuffer?.destroy();
     }
 
     protected update = (): void => {
@@ -156,8 +249,8 @@ export class ParticleRenderer extends BaseWebGPURenderer {
 
         device.queue.submit([encoder.finish()]);
 
-        // Swap buffers for ping-pong pattern
-        this.computeBuffer.swap();
+
+        this.inOutBuffer.swap();
     }
 
     private writeUniformData(): void {
@@ -171,62 +264,17 @@ export class ParticleRenderer extends BaseWebGPURenderer {
         this.uniformBuffer.writeBuffer(uniformData);
     }
 
-    private writeInitialParticleData(): void {
-        const initialData = new Float32Array(this.particleConfig.count * 4);
-        const velocityRange = this.particleConfig.initialVelocityRange;
-
-        for (let i = 0; i < this.particleConfig.count; i++) {
-            const offset = i * 4;
-            initialData[offset] = Math.random();     // x position
-            initialData[offset + 1] = Math.random(); // y position
-            initialData[offset + 2] = (Math.random() - 0.5) * velocityRange; // x velocity
-            initialData[offset + 3] = (Math.random() - 0.5) * velocityRange; // y velocity
+    private writeInitialComputeData(): void {
+        if (!this.computeConfig.inOutBufferStruct) {
+            throw new Error("inOutBufferStruct is null! could not find struct in shader!");
         }
 
-        this.computeBuffer.writeBuffer(initialData);
-    }
+        const initialData = new Float32Array(this.computeConfig.count * this.computeConfig.inOutBufferStruct.size / 4);
+        for (let i = 0; i < initialData.length; i++) {
+            initialData[i] = Math.random() * 2 - 1; // Random values between -1 and 1
+        }
 
-    private async createPipelines(): Promise<void> {
-        const device = this.gpuContext.Device;
-        const format = this.gpuContext.Format;
-
-        // Create shader modules
-        const computeShaderModule = this.resourceManager.createShaderModule(
-            this.shaderConfig.computeShader,
-            'Particle Update Shader'
-        );
-
-        const graphicsShaderModule = this.resourceManager.createShaderModule(
-            this.shaderConfig.graphicsShader,
-            'Particle Vertex Shader'
-        );
-
-        // Create pipeline layouts
-        const computePipelineLayout = device.createPipelineLayout({
-            bindGroupLayouts: [this.computeBindGroupManager.layout]
-        });
-
-        const renderPipelineLayout = device.createPipelineLayout({
-            bindGroupLayouts: [this.renderBindGroupManager.layout]
-        });
-
-        // Create pipeline factories
-        this.computePipelineFactory = new ComputeParticlePipelineFactory(
-            device,
-            computeShaderModule,
-            computePipelineLayout
-        );
-
-        this.renderPipelineFactory = new ParticleRenderPipelineFactory(
-            device,
-            format,
-            graphicsShaderModule,
-            renderPipelineLayout
-        );
-
-        // Create pipelines
-        this.computePipeline = await this.computePipelineFactory.createAsync();
-        this.renderPipeline = await this.renderPipelineFactory.createAsync();
+        this.inOutBuffer.writeBuffer(initialData);
     }
 
     private executeComputePass(encoder: GPUCommandEncoder): void {
@@ -237,10 +285,38 @@ export class ParticleRenderer extends BaseWebGPURenderer {
         this.useFirst = !this.useFirst;
         computePass.setBindGroup(0, bindGroup);
 
-        const workgroupCount = Math.ceil(
-            this.particleConfig.count / this.particleConfig.workgroupSize
-        );
-        computePass.dispatchWorkgroups(workgroupCount);
+        const [sizeX, sizeY, sizeZ] = this.computeConfig.workgroupSize;
+
+        let workgroupCount: [number, number, number];
+
+        // Calculate based on dimensions
+        if (sizeY === 1 && sizeZ === 1) {
+            // 1D dispatch
+            workgroupCount = [Math.ceil(this.computeConfig.count / sizeX), 1, 1];
+        } else if (sizeZ === 1) {
+            // 2D dispatch
+            const gridSize = Math.ceil(Math.sqrt(this.computeConfig.count));
+            workgroupCount = [
+                Math.ceil(gridSize / sizeX),
+                Math.ceil(gridSize / sizeY),
+                1
+            ];
+        } else {
+            // 3D dispatch
+            const gridSize = Math.ceil(Math.cbrt(this.computeConfig.count));
+            workgroupCount = [
+                Math.ceil(gridSize / sizeX),
+                Math.ceil(gridSize / sizeY),
+                Math.ceil(gridSize / sizeZ)
+            ];
+        }
+        workgroupCount = validateAndClampWorkgroupCount(workgroupCount, this.computeConfig.workgroupSize);
+
+        console.log(`Dispatching: [${workgroupCount}] with workgroup size [${this.computeConfig.workgroupSize}]`);
+
+
+        computePass.dispatchWorkgroups(...workgroupCount);
+
         computePass.end();
     }
 
@@ -256,8 +332,7 @@ export class ParticleRenderer extends BaseWebGPURenderer {
 
         renderPass.setPipeline(this.renderPipeline);
         renderPass.setBindGroup(0, this.renderBindGroupManager.BindGroup);
-        renderPass.setVertexBuffer(0, this.computeBuffer.OutputBuffer);
-        renderPass.draw(6, this.particleConfig.count); // 6 vertices per particle (2 triangles)
+        renderPass.draw(6, this.computeConfig.count); // 6 vertices per particle (2 triangles)
         renderPass.end();
     }
 }

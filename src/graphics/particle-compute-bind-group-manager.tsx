@@ -1,5 +1,5 @@
 ﻿import {GPUResourceManager} from "@/graphics/gpu-resource-manager.tsx";
-import {type ParticleComputeBuffer, UniformBuffer} from "@/graphics/particle-compute-buffer.tsx";
+import {type InOutBuffer, UniformBuffer} from "@/graphics/in-out-buffer.tsx";
 
 export class ParticleRenderBindGroupManager {
     layout: GPUBindGroupLayout;
@@ -8,6 +8,7 @@ export class ParticleRenderBindGroupManager {
     constructor(
         private resourceManager: GPUResourceManager,
         private uniformBuffer: UniformBuffer,
+        private inOutBuffer: InOutBuffer,
         private device: GPUDevice,
     ) {
         this.createBindGroups();
@@ -26,13 +27,19 @@ export class ParticleRenderBindGroupManager {
                 visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
                 buffer: {type: 'uniform', hasDynamicOffset: false},
             },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: {type: 'read-only-storage', hasDynamicOffset: false},
+                }
             ]
         })
 
         this.bindGroup = this.resourceManager.createBindGroup(
             this.layout,
             [
-                {binding: 0, resource: {buffer: this.uniformBuffer.Buffer}}
+                {binding: 0, resource: {buffer: this.uniformBuffer.Buffer}},
+                {binding: 1, resource: {buffer: this.inOutBuffer.OutputBuffer}},
             ],
             'Render Bind Group'
         );
@@ -48,7 +55,7 @@ export class ParticleComputeBindGroupManager {
 
     constructor(
         private resourceManager: GPUResourceManager,
-        private particleBufferSystem: ParticleComputeBuffer,
+        private particleBufferSystem: InOutBuffer,
         private uniformsBuffer: UniformBuffer,
         private device: GPUDevice
     ) {

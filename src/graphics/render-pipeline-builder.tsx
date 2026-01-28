@@ -2,7 +2,8 @@
 
 export class RenderPipelineBuilder {
     private layout: GPUPipelineLayout | 'auto' = 'auto';
-    private shaderModule: GPUShaderModule | null = null;
+    private vertexShaderModule: GPUShaderModule | null = null;
+    private fragmentShaderModule: GPUShaderModule | null = null;
     private vertexEntryPoint: string = 'vertexMain';
     private fragmentEntryPoint: string = 'fragmentMain';
     private vertexBuffers: VertexBufferLayout[] = [];
@@ -19,8 +20,13 @@ export class RenderPipelineBuilder {
         return this;
     }
 
-    setShaderModule(module: GPUShaderModule): this {
-        this.shaderModule = module;
+    setVertexShaderModule(module: GPUShaderModule): this {
+        this.vertexShaderModule = module;
+        return this;
+    }
+
+    setFragmentShaderModule(module: GPUShaderModule): this {
+        this.fragmentShaderModule = module;
         return this;
     }
 
@@ -55,43 +61,39 @@ export class RenderPipelineBuilder {
     }
 
     buildAsync(): Promise<GPURenderPipeline> {
-        if (!this.shaderModule) {
-            throw new Error('Shader module is required for render pipeline');
-        }
 
-        return this.device.createRenderPipelineAsync({
-            layout: this.layout,
-            vertex: {
-                module: this.shaderModule,
-                entryPoint: this.vertexEntryPoint,
-                buffers: this.vertexBuffers
-            },
-            fragment: {
-                module: this.shaderModule,
-                entryPoint: this.fragmentEntryPoint,
-                targets: [{format: this.format}]
-            },
-            primitive: {
-                topology: this.topology,
-                cullMode: this.cullMode
-            }
-        });
+        const pld = this.getRenderPipelineDescriptor();
+        if (!pld) {
+            throw new Error('Failed to create render pipeline descriptor');
+        }
+        return this.device.createRenderPipelineAsync(pld);
     }
 
     build(): GPURenderPipeline {
-        if (!this.shaderModule) {
-            throw new Error('Shader module is required for render pipeline');
+        const pld = this.getRenderPipelineDescriptor();
+        if (!pld) {
+            throw new Error('Failed to create render pipeline descriptor');
         }
 
-        return this.device.createRenderPipeline({
+        return this.device.createRenderPipeline(pld);
+    }
+
+    private getRenderPipelineDescriptor(): GPURenderPipelineDescriptor | null {
+        if (!this.vertexShaderModule) {
+            throw new Error('Vertex shader module is required for render pipeline');
+        }
+        if (!this.fragmentShaderModule) {
+            throw new Error('Fragment shader module is required for render pipeline');
+        }
+
+        return {
             layout: this.layout,
             vertex: {
-                module: this.shaderModule,
+                module: this.vertexShaderModule,
                 entryPoint: this.vertexEntryPoint,
-                buffers: this.vertexBuffers
             },
             fragment: {
-                module: this.shaderModule,
+                module: this.fragmentShaderModule,
                 entryPoint: this.fragmentEntryPoint,
                 targets: [{format: this.format}]
             },
@@ -99,7 +101,7 @@ export class RenderPipelineBuilder {
                 topology: this.topology,
                 cullMode: this.cullMode
             }
-        });
+        }
     }
 
 }
