@@ -35,7 +35,7 @@ export const WebGPUCanvas: React.FC<WebGPUCanvasProps> = ({
                 computeShader: computeShader, vertexShader: vertexShader, fragmentShader: fragmentShader,
             },
             {
-                count: 32,
+                count: 2000,
                 inOutBufferStruct: getStructFromBufferBinding(computeShader, 'input'),
                 workgroupSize: [64, 1, 1],
             });

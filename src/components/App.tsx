@@ -75,7 +75,7 @@ function App() {
                     vertexShader: newVertexShader,
                     fragmentShader: newFragmentShader,
                 }, {
-                    count: 32,
+                    count: 2000,
                     inOutBufferStruct: computeStructs,
                     workgroupSize: workGroupSize,
                 });
