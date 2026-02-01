@@ -1,116 +1,119 @@
-﻿import {GPUResourceManager} from "@/graphics/gpu-resource-manager.tsx";
-import {type InOutBuffer, UniformBuffer} from "@/graphics/in-out-buffer.tsx";
+﻿import type {InputOutputBuffers, UniformBuffer} from "@/graphics/input-output-buffers.tsx";
 
-export class ParticleRenderBindGroupManager {
-    layout: GPUBindGroupLayout;
-    private bindGroup: GPUBindGroup;
+/**
+ * Bind group configuration for particle rendering
+ */
+export interface ParticleRenderBindGroupConfig {
+    uniformBuffer: UniformBuffer;
+    particleBuffer: InputOutputBuffers;
+    device: GPUDevice;
+}
 
-    constructor(
-        private resourceManager: GPUResourceManager,
-        private uniformBuffer: UniformBuffer,
-        private inOutBuffer: InOutBuffer,
-        private device: GPUDevice,
-    ) {
-        this.createBindGroups();
-    }
+/**
+ * Bind group configuration for particle compute
+ */
+export interface ParticleComputeBindGroupConfig {
+    uniformBuffer: UniformBuffer;
+    particleBuffer: InputOutputBuffers;
+    device: GPUDevice;
+}
 
-    get BindGroup(): GPUBindGroup {
-        return this.bindGroup;
-    }
-
-    createBindGroups(): GPUBindGroup[] {
-
-
-        this.layout = this.device.createBindGroupLayout({
-            entries: [{
+/**
+ * Creates bind group layout for particle rendering
+ */
+export function createParticleRenderLayout(device: GPUDevice): GPUBindGroupLayout {
+    return device.createBindGroupLayout({
+        label: 'Particle Render Layout',
+        entries: [
+            {
                 binding: 0,
                 visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-                buffer: {type: 'uniform', hasDynamicOffset: false},
+                buffer: {type: 'uniform'}
             },
-                {
-                    binding: 1,
-                    visibility: GPUShaderStage.VERTEX,
-                    buffer: {type: 'read-only-storage', hasDynamicOffset: false},
-                }
-            ]
-        })
-
-        this.bindGroup = this.resourceManager.createBindGroup(
-            this.layout,
-            [
-                {binding: 0, resource: {buffer: this.uniformBuffer.Buffer}},
-                {binding: 1, resource: {buffer: this.inOutBuffer.OutputBuffer}},
-            ],
-            'Render Bind Group'
-        );
-        return [this.bindGroup]
-    }
+            {
+                binding: 1,
+                visibility: GPUShaderStage.VERTEX,
+                buffer: {type: 'read-only-storage'}
+            }
+        ]
+    });
 }
 
-export class ParticleComputeBindGroupManager {
-    layout: GPUBindGroupLayout;
-    private bindGroupA: GPUBindGroup;
-    private bindGroupB: GPUBindGroup;
-    private useBindGroupA: boolean = true
-
-    constructor(
-        private resourceManager: GPUResourceManager,
-        private particleBufferSystem: InOutBuffer,
-        private uniformsBuffer: UniformBuffer,
-        private device: GPUDevice
-    ) {
-        this.createBindGroups();
-    }
-
-    get BindGroup(): GPUBindGroup {
-        const bindGroup: GPUBindGroup = this.useBindGroupA ? this.bindGroupA : this.bindGroupB;
-        this.useBindGroupA = !this.useBindGroupA;
-        return bindGroup;
-    }
-
-    createBindGroups(): GPUBindGroup[] {
-
-        this.layout = this.device.createBindGroupLayout({
-            entries: [{
+/**
+ * Creates bind group layout for particle compute
+ */
+export function createParticleComputeLayout(device: GPUDevice): GPUBindGroupLayout {
+    return device.createBindGroupLayout({
+        label: 'Particle Compute Layout',
+        entries: [
+            {
                 binding: 0,
                 visibility: GPUShaderStage.COMPUTE,
-                buffer: {type: 'uniform', hasDynamicOffset: false},
+                buffer: {type: 'uniform'}
             },
-                {
-                    binding: 1,
-                    visibility: GPUShaderStage.COMPUTE,
-                    buffer: {type: 'read-only-storage', hasDynamicOffset: false},
-                },
-                {
-                    binding: 2,
-                    visibility: GPUShaderStage.COMPUTE,
-                    buffer: {type: 'storage', hasDynamicOffset: false}
-                }
-            ]
-        });
-        // Bind group A: read from current read buffer, write to write buffer
-        this.bindGroupA = this.resourceManager.createBindGroup(
-            this.layout,
-            [
-                {binding: 0, resource: {buffer: this.uniformsBuffer.Buffer}},
-                {binding: 1, resource: {buffer: this.particleBufferSystem.InputBuffer}},
-                {binding: 2, resource: {buffer: this.particleBufferSystem.OutputBuffer}}
-            ],
-            'Bind Group A'
-        );
-
-        // Bind group B: after swap, read/write buffers are reversed
-        this.particleBufferSystem.swap()
-        this.bindGroupB = this.resourceManager.createBindGroup(
-            this.layout,
-            [
-                {binding: 0, resource: {buffer: this.uniformsBuffer.Buffer}},
-                {binding: 1, resource: {buffer: this.particleBufferSystem.InputBuffer}},
-                {binding: 2, resource: {buffer: this.particleBufferSystem.OutputBuffer}}
-            ],
-            'Bind Group B'
-        );
-        this.particleBufferSystem.swap(); // Swap back to initial state
-        return [this.bindGroupA, this.bindGroupB]
-    }
+            {
+                binding: 1,
+                visibility: GPUShaderStage.COMPUTE,
+                buffer: {type: 'read-only-storage'}
+            },
+            {
+                binding: 2,
+                visibility: GPUShaderStage.COMPUTE,
+                buffer: {type: 'storage'}
+            }
+        ]
+    });
 }
+
+/**
+ * Creates bind group for particle rendering
+ */
+export function createParticleRenderBindGroup(
+    config: ParticleRenderBindGroupConfig,
+    layout: GPUBindGroupLayout
+): GPUBindGroup {
+    return config.device.createBindGroup({
+        label: 'Particle Render Bind Group',
+        layout,
+        entries: [
+            {binding: 0, resource: {buffer: config.uniformBuffer.Buffer}},
+            {binding: 1, resource: {buffer: config.particleBuffer.OutputBuffer}}
+        ]
+    });
+}
+
+/**
+ * Creates ping-pong bind groups for particle compute
+ * Returns [bindGroupA, bindGroupB] for double buffering
+ */
+export function createParticleComputeBindGroups(
+    config: ParticleComputeBindGroupConfig,
+    layout: GPUBindGroupLayout
+): [GPUBindGroup, GPUBindGroup] {
+    const {device, uniformBuffer, particleBuffer} = config;
+
+    // Bind group A: current state
+    const bindGroupA = device.createBindGroup({
+        label: 'Particle Compute Bind Group A',
+        layout,
+        entries: [
+            {binding: 0, resource: {buffer: uniformBuffer.Buffer}},
+            {binding: 1, resource: {buffer: particleBuffer.InputBuffer}},
+            {binding: 2, resource: {buffer: particleBuffer.OutputBuffer}}
+        ]
+    });
+
+    // Bind group B: swapped state (for ping-pong)
+    const bindGroupB = device.createBindGroup({
+        label: 'Particle Compute Bind Group B',
+        layout,
+        entries: [
+            {binding: 0, resource: {buffer: uniformBuffer.Buffer}},
+            {binding: 1, resource: {buffer: particleBuffer.OutputBuffer}}, // Swapped
+            {binding: 2, resource: {buffer: particleBuffer.InputBuffer}}   // Swapped
+        ]
+    });
+
+    return [bindGroupA, bindGroupB];
+}
+

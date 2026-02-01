@@ -18,7 +18,7 @@ fn computeMain(
         
         if (index >= arrayLength(&input)) {
            return;
-        }
+        } 
         
         var particle = input[index];
         

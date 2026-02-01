@@ -34,7 +34,7 @@ export class UniformBuffer implements IBufferSystem {
     }
 }
 
-export class InOutBuffer implements IBufferSystem {
+export class InputOutputBuffers implements IBufferSystem {
     private bufferA: GPUBuffer;
     private bufferB: GPUBuffer;
     private useBufferA: boolean = true;
