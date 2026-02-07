@@ -7,6 +7,8 @@ import type {GPUResourceManager} from "@/graphics/gpu-resource-manager.tsx";
 import {ComputePipelineBuilder} from "@/graphics/compute-pipeline-builder.tsx";
 import {RenderPipelineBuilder} from "@/graphics/render-pipeline-builder.tsx";
 import {
+    createCanvasRenderBindGroup,
+    createCanvasRenderLayout,
     createParticleComputeBindGroups,
     createParticleComputeLayout,
     createParticleRenderBindGroup,
@@ -69,6 +71,48 @@ export class ParticlePipelineStrategy implements IPipelineStrategy {
             .buildAsync();
 
         return {compute, render};
+    }
+}
+
+export class CanvasPipelineStrategy implements IPipelineStrategy {
+    async createPipelines(
+        device: GPUDevice,
+        resourceManager: GPUResourceManager,
+        shaderConfig: shader_config,
+        context: {
+            format: GPUTextureFormat;
+            renderBindGroupLayout: GPUBindGroupLayout
+        }
+    ): Promise<{ render: GPURenderPipeline }> {
+        // Create shader modules
+
+
+        const vertexShaderModule = resourceManager.createShaderModule(
+            shaderConfig.vertexShader,
+            'Particle Vertex Shader'
+        );
+
+        const fragmentShaderModule = resourceManager.createShaderModule(
+            shaderConfig.fragmentShader,
+            'Particle Fragment Shader'
+        );
+
+
+        const renderPipelineLayout = device.createPipelineLayout({
+            bindGroupLayouts: [context.renderBindGroupLayout]
+        });
+
+
+        const render = await new RenderPipelineBuilder(device, context.format)
+            .setVertexShaderModule(vertexShaderModule)
+            .setFragmentShaderModule(fragmentShaderModule)
+            .setLayout(renderPipelineLayout)
+            .setVertexEntryPoint('vertexMain')
+            .setFragmentEntryPoint('fragmentMain')
+            .setTopology('triangle-list')
+            .buildAsync();
+
+        return {render: render}
     }
 }
 
@@ -171,10 +215,64 @@ export class ParticleResourceStrategy implements IResourceStrategy {
     }
 }
 
+export class CanvasResourceStrategy implements IResourceStrategy {
+    cleanup(): void {
+        // noop
+    }
+
+    private uniformBuffer: UniformBuffer;
+
+    private renderBindGroup: GPUBindGroup;
+    private renderLayout: GPUBindGroupLayout;
+
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    initializeResources(device: GPUDevice, resourceManager: GPUResourceManager, _config: {
+        resolution: { width: number; height: number }
+    }): void {
+
+
+        this.renderLayout = createCanvasRenderLayout(device);
+
+        this.uniformBuffer = new UniformBuffer(device, resourceManager);
+
+
+        this.renderLayout = createParticleRenderLayout(device);
+        this.renderBindGroup = createCanvasRenderBindGroup({
+                device: device,
+                uniformBuffer: this.uniformBuffer
+            }, createParticleRenderLayout(device)
+        );
+
+    }
+
+
+    getBindGroups(): { compute: GPUBindGroup[], render: GPUBindGroup[] } {
+        return {
+            compute: [],
+            render: [this.renderBindGroup]
+        };
+    }
+
+    getUniformBuffer(): UniformBuffer {
+        return this.uniformBuffer;
+    }
+
+    getRenderBindGroupLayout(): GPUBindGroupLayout {
+        return this.renderLayout;
+    }
+
+}
+
+export class NullUpdateStrategy implements IUpdateStrategy {
+    public update(): void {
+    }
+}
+
 /**
  * Particle compute update strategy
  */
-export class ParticleComputeStrategy implements IUpdateStrategy {
+export class ParticleComputeUpdateStrategy implements IUpdateStrategy {
     private pingPong: PingPongBindGroups
 
     constructor(
@@ -208,6 +306,35 @@ export class ParticleComputeStrategy implements IUpdateStrategy {
 
         // Swap buffers after compute
         this.resourceStrategy.getInOutBuffer().swap();
+    }
+}
+
+
+
+export class CanvasRenderStrategy implements IRenderStrategy {
+    constructor() {}
+
+    render(
+        encoder: GPUCommandEncoder,
+        textureView: GPUTextureView,
+        pipeline: GPURenderPipeline,
+        bindGroup: GPUBindGroup,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        _config?: never
+    ): void {
+        const renderPass = encoder.beginRenderPass({
+            colorAttachments: [{
+                view: textureView,
+                clearValue: {r: 0.0, g: 0.0, b: 0.0, a: 1.0},
+                loadOp: 'clear',
+                storeOp: 'store'
+            }]
+        });
+
+        renderPass.setPipeline(pipeline);
+        renderPass.setBindGroup(0, bindGroup);
+        renderPass.draw(6, 1); // 6 vertices to make a quad (2 triangles)
+        renderPass.end();
     }
 }
 

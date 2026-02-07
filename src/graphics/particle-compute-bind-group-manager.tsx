@@ -3,20 +3,18 @@
 /**
  * Bind group configuration for particle rendering
  */
-export interface ParticleRenderBindGroupConfig {
+export interface ParticleBindGroupConfig {
     uniformBuffer: UniformBuffer;
     particleBuffer: InputOutputBuffers;
     device: GPUDevice;
 }
 
-/**
- * Bind group configuration for particle compute
- */
-export interface ParticleComputeBindGroupConfig {
+export interface CanvasBindGroupConfig {
     uniformBuffer: UniformBuffer;
-    particleBuffer: InputOutputBuffers;
     device: GPUDevice;
 }
+
+
 
 /**
  * Creates bind group layout for particle rendering
@@ -37,6 +35,18 @@ export function createParticleRenderLayout(device: GPUDevice): GPUBindGroupLayou
             }
         ]
     });
+}
+
+export function createCanvasRenderLayout(device: GPUDevice): GPUBindGroupLayout {
+    return device.createBindGroupLayout({
+        label: 'Canvas Render Layout',
+        entries: [{
+            binding: 0,
+            visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+            buffer: {type: 'uniform'}
+        }]
+
+    })
 }
 
 /**
@@ -69,7 +79,7 @@ export function createParticleComputeLayout(device: GPUDevice): GPUBindGroupLayo
  * Creates bind group for particle rendering
  */
 export function createParticleRenderBindGroup(
-    config: ParticleRenderBindGroupConfig,
+    config: ParticleBindGroupConfig,
     layout: GPUBindGroupLayout
 ): GPUBindGroup {
     return config.device.createBindGroup({
@@ -82,12 +92,22 @@ export function createParticleRenderBindGroup(
     });
 }
 
+export function createCanvasRenderBindGroup(config: CanvasBindGroupConfig, layout: GPUBindGroupLayout): GPUBindGroup {
+    return config.device.createBindGroup({
+        label: 'Canvas Render BindGroup',
+        layout,
+        entries: [
+            {binding: 0, resource: {buffer: config.uniformBuffer.Buffer}},
+        ]
+    })
+}
+
 /**
  * Creates ping-pong bind groups for particle compute
  * Returns [bindGroupA, bindGroupB] for double buffering
  */
 export function createParticleComputeBindGroups(
-    config: ParticleComputeBindGroupConfig,
+    config: ParticleBindGroupConfig,
     layout: GPUBindGroupLayout
 ): [GPUBindGroup, GPUBindGroup] {
     const {device, uniformBuffer, particleBuffer} = config;
