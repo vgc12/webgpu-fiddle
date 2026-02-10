@@ -1,8 +1,7 @@
 // WebGPUCanvas.tsx - React component that owns WebGPU
 import React, {useEffect, useRef} from 'react';
-import {ParticleRenderer} from "@/graphics/webgpu-renderer.tsx";
 import type {IRenderer} from "@/graphics/i-renderer.tsx";
-import {getStructFromBufferBinding} from "@/graphics/shader-builder.tsx";
+import {CanvasRenderer} from "@/graphics/canvas-renderer.tsx";
 
 interface WebGPUCanvasProps {
     width?: number;
@@ -30,7 +29,7 @@ export const WebGPUCanvas: React.FC<WebGPUCanvasProps> = ({
         if (!canvasRef.current || !rendererRef || rendererRef.current) {
             return;
         }
-
+        /*
         const renderer = new ParticleRenderer(canvasRef.current, {
                 computeShader: computeShader, vertexShader: vertexShader, fragmentShader: fragmentShader,
             },
@@ -39,6 +38,14 @@ export const WebGPUCanvas: React.FC<WebGPUCanvasProps> = ({
                 inOutBufferStruct: getStructFromBufferBinding(computeShader, 'input'),
                 workgroupSize: [64, 1, 1],
             });
+            
+         */
+        const renderer = new CanvasRenderer(canvasRef.current, {
+            computeShader: computeShader,
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader
+        });
+        
         rendererRef.current = renderer;
         renderer.start().catch(err => {
             console.error('Failed to start WebGPU renderer:', err);

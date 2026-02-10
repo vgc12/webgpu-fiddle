@@ -1,24 +1,22 @@
 import {StrategyBasedRenderer} from "./strategy-based-renderer";
 import {
-    CanvasPipelineStrategy, CanvasRenderStrategy,
-    CanvasResourceStrategy, NullUpdateStrategy,
     ParticleComputeUpdateStrategy,
     ParticlePipelineStrategy,
     ParticleRenderStrategy,
     ParticleResourceStrategy
 } from "@/graphics/particle-strategies.tsx";
-import type {shader_config} from "@/graphics/shader_config.tsx";
+import type {ShaderConfig} from "@/graphics/shader_config.tsx";
 import type {ComputeConfig} from "@/graphics/compute-config.tsx";
 
 /**
- * Particle Renderer draws multiple particles at once 
+ * Particle Renderer draws multiple particles at once
  */
 export class ParticleRenderer extends StrategyBasedRenderer {
     private particleResourceStrategy: ParticleResourceStrategy;
 
     constructor(
         canvas: HTMLCanvasElement,
-        shaderConfig: shader_config,
+        shaderConfig: ShaderConfig,
         private computeConfig: ComputeConfig = {
             count: 1000,
             inOutBufferStruct: null,
@@ -46,7 +44,7 @@ export class ParticleRenderer extends StrategyBasedRenderer {
     }
 
     async recompileShaders(
-        newShaderConfig: shader_config,
+        newShaderConfig: ShaderConfig,
         options?: { computeConfig?: Partial<ComputeConfig> }
     ): Promise<void> {
         // Update compute config if provided
@@ -63,7 +61,7 @@ export class ParticleRenderer extends StrategyBasedRenderer {
             this.renderStrategy = new ParticleRenderStrategy(this.computeConfig.count);
         }
 
-        await super.recompileShaders(newShaderConfig, options);
+        await super.recompileShaders(newShaderConfig);
     }
 
     protected updateUniforms(): void {
@@ -86,67 +84,3 @@ export class ParticleRenderer extends StrategyBasedRenderer {
     }
 }
 
-// Draws a rectangle that covers the whole screen
-export class CanvasRenderer extends StrategyBasedRenderer{
-    private canvasResourceStrategy: CanvasResourceStrategy;
-
-    constructor(
-        canvas: HTMLCanvasElement,
-        shaderConfig: shader_config,
-        resolution?: { width: number; height: number }
-    ) {
-        // Create particle-specific strategies
-        const resourceStrategy = new CanvasResourceStrategy()
-        const pipelineStrategy = new CanvasPipelineStrategy();
-        const updateStrategy = new NullUpdateStrategy();
-        const renderStrategy = new CanvasRenderStrategy();
-
-        super(
-            canvas,
-            shaderConfig,
-            pipelineStrategy,
-            resourceStrategy,
-            updateStrategy,
-            renderStrategy,
-            resolution
-        );
-
-
-    }
-
-    async recompileShaders(
-        newShaderConfig: shader_config,
-        options?: { computeConfig?: Partial<ComputeConfig> }
-    ): Promise<void> {
-        // Update compute config if provided
-        if (options?.computeConfig) {
-       
-
-            // Recreate strategies with new config
-            this.canvasResourceStrategy = new CanvasResourceStrategy();
-            this.resourceStrategy = this.canvasResourceStrategy;
-    
-            this.renderStrategy = new CanvasRenderStrategy();
-        }
-
-        await super.recompileShaders(newShaderConfig, options);
-    }
-
-    protected updateUniforms(): void {
-        const uniformData = new Float32Array([
-            this.resolution.width,
-            this.resolution.height,
-            this.resolution.width / this.resolution.height,
-            this.time.TotalTime
-        ]);
-
-        this.canvasResourceStrategy.getUniformBuffer().writeBuffer(uniformData);
-    }
-
-    protected getStrategyContext(): any {
-        return {
-            format: this.gpuContext.Format,
-            renderBindGroupLayout: this.canvasResourceStrategy.getRenderBindGroupLayout()
-        };
-    }
-}

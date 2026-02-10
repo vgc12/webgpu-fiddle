@@ -2,20 +2,23 @@
 import defaultParticleCompute from '@/shaders/default.particle.compute.wgsl';
 import defaultParticleVertexCompute from '@/shaders/default.particle.vertex.wgsl';
 import defaultParticleFragmentCompute from '@/shaders/default.particle.fragment.wgsl';
+import defaultCanvasVertexShader from '@/shaders/default.canvas.vertex.wgsl';
+import defaultCanvasFragmentShader from '@/shaders/default.canvas.fragment.wgsl';
+
 import uniformStruct from '@/shaders/uniforms.wgsl';
+import type {ShaderConfig} from "@/graphics/shader_config.tsx";
 
+export const canvasShaderConfig: ShaderConfig = {
+    vertexShader: defaultCanvasVertexShader,
+    fragmentShader: defaultCanvasFragmentShader
+};
 
-export function getDefaultParticleComputeShader(): string {
-    return defaultParticleCompute;
-}
+export const particleShaderConfig: ShaderConfig = {
+    computeShader: defaultParticleCompute,
+    vertexShader: defaultParticleVertexCompute,
+    fragmentShader: defaultParticleFragmentCompute
+};
 
-export function getDefaultParticleVertexShader(): string {
-    return defaultParticleVertexCompute;
-}
-
-export function getDefaultParticleFragmentShader(): string {
-    return defaultParticleFragmentCompute;
-}
 
 export function getWorkgroupSize(computeShader: string): [number, number, number] {
     // Match @workgroup_size(X) or @workgroup_size(X, Y) or @workgroup_size(X, Y, Z)

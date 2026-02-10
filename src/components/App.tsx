@@ -1,28 +1,34 @@
 import '../style.css'
 import {WebGPUCanvas} from "@/components/ui/main-canvas.tsx";
-import {useEffect, useRef, useState} from "react";
-import {MonacoEditor} from "@/monaco/monaco-editor.tsx";
+import {useCallback, useEffect, useRef, useState} from "react";
+import {MonacoEditor, type Tab} from "@/monaco/monaco-editor.tsx";
 import {registerWGSL} from "@/monaco/registerWGSL.tsx";
 import {Panel} from "@/components/ui/panel.tsx";
 import {ButtonLightRectangle} from "@/components/ui/button.tsx";
 
 
 import {
-    getDefaultParticleComputeShader,
-    getDefaultParticleFragmentShader,
-    getDefaultParticleVertexShader,
+    canvasShaderConfig,
     getStructFromBufferBinding,
     getWorkgroupSize,
-    injectUniformsIntoShader
+    injectUniformsIntoShader,
+    particleShaderConfig
 } from "@/graphics/shader-builder.tsx";
 import {useDarkMode} from "@/components/use-dark-mode.tsx";
 import type {IRenderer} from "@/graphics/i-renderer.tsx";
 import {generateVariableDocumentation} from "@/graphics/generate-variable-documentation.tsx";
+import type {ShaderConfig} from "@/graphics/shader_config.tsx";
 
 
 function App() {
     /*const [isDarkMode, setIsDarkMode] =*/
     useDarkMode();
+
+    const [shaderType, setShaderType] = useState<'canvas' | 'particle'>('canvas');
+
+    const shaderConfig: ShaderConfig = shaderType === 'canvas' ? canvasShaderConfig : particleShaderConfig;
+
+
     const tab = {
         compute: 'compute',
         vertex: 'vertex',
@@ -31,12 +37,12 @@ function App() {
 
     type tabs = typeof tab[keyof typeof tab];
 
-    const [activeTab, setActiveTab] = useState<tabs>('compute');
+    const [activeTab, setActiveTab] = useState<tabs>('vertex');
 
     const [tabs, setTabs] = useState<Record<tabs, string>>({
-        'compute': generateVariableDocumentation('compute') + getDefaultParticleComputeShader(),
-        'vertex': generateVariableDocumentation('vertex') + getDefaultParticleVertexShader(),
-        'fragment': generateVariableDocumentation('fragment') + getDefaultParticleFragmentShader(),
+        'compute': generateVariableDocumentation('compute') + shaderConfig.computeShader,
+        'vertex': generateVariableDocumentation('vertex') + shaderConfig.vertexShader,
+        'fragment': generateVariableDocumentation('fragment') + shaderConfig.fragmentShader,
     });
 
     const [vertexShader, setVertexShader] = useState<string>(injectUniformsIntoShader(tabs.vertex));
@@ -49,6 +55,20 @@ function App() {
         registerWGSL();
     }, []);
 
+    const getTabs = useCallback(() => {
+        const tabArray: Tab[] = [
+            {id: 'vertex', label: 'Vertex'},
+            {id: 'fragment', label: 'Fragment'},
+        ]
+        if (shaderType === 'particle') {
+            tabArray.unshift({id: 'compute', label: 'Compute'});
+        }
+
+        return tabArray;
+    }, [shaderType]);
+    const handleEditorChange = useCallback((value: string) => {
+        setTabs(prev => ({...prev, [activeTab]: value}))
+    }, [activeTab]);
     const handleCompileAndApply = async () => {
 
         const newVertexShader = injectUniformsIntoShader(tabs.vertex);
@@ -80,8 +100,7 @@ function App() {
                     workgroupSize: workGroupSize,
                 });
                 console.log('Shaders recompiled successfully!');
-            }
-            catch (error) {
+            } catch (error) {
                 console.error('Failed to recompile shaders:', error);
             }
         }
@@ -101,15 +120,14 @@ function App() {
                     <MonacoEditor
                         value={tabs[activeTab]}
                         language="wgsl"
-                        onChange={(value) => setTabs({...tabs, [activeTab]: value})}
-                        tabs={[
-                            {id: 'compute', label: 'Compute'},
-                            {id: 'vertex', label: 'Vertex'},
-                            {id: 'fragment', label: 'Fragment'},
-                            {id: 'sharedStructs', label: 'Shared Structs'}
-                        ]}
-                        onTabChange={setActiveTab as (s: string) => void}
-
+                        onChange={handleEditorChange
+                        }
+                        tabs={getTabs()}
+                        onTabChange={(s) => {
+                            const t = s as tabs;
+                            setActiveTab(t)
+                        }
+                        }
                         className="h-full"
                     />
 

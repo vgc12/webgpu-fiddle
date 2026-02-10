@@ -1,4 +1,4 @@
-﻿import type {shader_config} from "@/graphics/shader_config.tsx";
+﻿import type {ShaderConfig} from "@/graphics/shader_config.tsx";
 import type {IPipelineStrategy, IRenderStrategy, IResourceStrategy, IUpdateStrategy} from "./rendering-strategies";
 import {BaseWebGPURenderer} from "@/graphics/base-web-gpu-renderer.tsx";
 
@@ -12,7 +12,7 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
 
     constructor(
         canvas: HTMLCanvasElement,
-        shaderConfig: shader_config,
+        shaderConfig: ShaderConfig,
         protected pipelineStrategy: IPipelineStrategy,
         protected resourceStrategy: IResourceStrategy,
         protected updateStrategy: IUpdateStrategy,
@@ -22,23 +22,8 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
         super(canvas, shaderConfig, resolution);
     }
 
-    async recompileShaders(newShaderConfig: shader_config, options?: any): Promise<void> {
+    async recompileShaders(newShaderConfig: ShaderConfig): Promise<void> {
         this.shaderConfig = newShaderConfig;
-
-        // Allow strategies to be updated if provided in options
-        if (options?.pipelineStrategy) {
-            this.pipelineStrategy = options.pipelineStrategy;
-        }
-        if (options?.resourceStrategy) {
-            this.resourceStrategy = options.resourceStrategy;
-        }
-        if (options?.updateStrategy) {
-            this.updateStrategy = options.updateStrategy;
-        }
-        if (options?.renderStrategy) {
-            this.renderStrategy = options.renderStrategy;
-        }
-
         this.initializeResources();
         await this.createPipelines();
     }

@@ -2,7 +2,7 @@
 import {AnimationController} from "@/graphics/animation-controller.tsx";
 import {GPUResourceManager} from "@/graphics/gpu-resource-manager.tsx";
 import type {IRenderer} from "@/graphics/i-renderer.tsx";
-import type {shader_config} from "@/graphics/shader_config.tsx";
+import type {ShaderConfig} from "@/graphics/shader_config.tsx";
 import {Time} from "@/utils/time.ts";
 
 /**
@@ -18,7 +18,7 @@ export abstract class BaseWebGPURenderer implements IRenderer {
 
     protected constructor(
         canvas: HTMLCanvasElement,
-        protected shaderConfig: shader_config,
+        protected shaderConfig: ShaderConfig,
         protected resolution: { width: number; height: number } = {width: 1920, height: 1080}
     ) {
         this.time = new Time();
@@ -51,7 +51,7 @@ export abstract class BaseWebGPURenderer implements IRenderer {
         this.initialized = true;
     }
 
-    abstract recompileShaders(newShaderConfig: shader_config, options?: any): Promise<void>;
+    abstract recompileShaders(newShaderConfig: ShaderConfig, options?: any): Promise<void>;
 
     // Template methods - subclasses must implement
     protected abstract initializeResources(): void;
