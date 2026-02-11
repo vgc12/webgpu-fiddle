@@ -84,7 +84,8 @@ export function MonacoEditor({
             if (disposableRef.current) {
                 try {
                     disposableRef.current.dispose();
-                } catch (e) {
+                }
+                catch (e) {
                     // Ignore cancellation errors during cleanup
                 }
                 disposableRef.current = null;
@@ -92,8 +93,11 @@ export function MonacoEditor({
 
             if (monacoRef.current) {
                 try {
-                    monacoRef.current.dispose();
-                } catch (e) {
+                    if (monacoRef && monacoRef.current) {
+                        monacoRef.current.dispose();
+                    }
+                }
+                catch (e) {
                     // Ignore cancellation errors during cleanup
                 }
                 monacoRef.current = null;

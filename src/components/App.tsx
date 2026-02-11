@@ -39,15 +39,22 @@ function App() {
 
     const [activeTab, setActiveTab] = useState<tabs>('vertex');
 
-    const [tabs, setTabs] = useState<Record<tabs, string>>({
-        'compute': generateVariableDocumentation('compute') + shaderConfig.computeShader,
-        'vertex': generateVariableDocumentation('vertex') + shaderConfig.vertexShader,
-        'fragment': generateVariableDocumentation('fragment') + shaderConfig.fragmentShader,
-    });
+    const initialVertexShader = generateVariableDocumentation('vertex') + '\n' +
+        shaderConfig.vertexShader;
+    const initialFragmentShader = generateVariableDocumentation('fragment') + '\n' +
+        shaderConfig.fragmentShader;
+    const initialComputeShader = shaderConfig.computeShader
+                                 ? generateVariableDocumentation('compute') + '\n' +
+                                     shaderConfig.computeShader
+                                 : '';
 
-    const [vertexShader, setVertexShader] = useState<string>(injectUniformsIntoShader(tabs.vertex));
-    const [fragmentShader, setFragmentShader] = useState<string>(injectUniformsIntoShader(tabs.fragment));
-    const [computeShader, setComputeShader] = useState<string>(injectUniformsIntoShader(tabs.compute));
+    const [userVertexShader, setUserVertexShader] = useState<string>(initialVertexShader);
+    const [userFragmentShader, setUserFragmentShader] = useState<string>(initialFragmentShader);
+    const [userComputeShader, setUserComputeShader] = useState<string>(initialComputeShader);
+
+    const [fullVertexShader, setFullVertexShader] = useState<string>(injectUniformsIntoShader(initialVertexShader));
+    const [fullFragmentShader, setFullFragmentShader] = useState<string>(injectUniformsIntoShader(initialFragmentShader));
+    const [fullComputeShader, setFullComputeShader] = useState<string>(injectUniformsIntoShader(initialComputeShader));
 
     const rendererRef = useRef<IRenderer | null>(null);
 
@@ -66,22 +73,28 @@ function App() {
 
         return tabArray;
     }, [shaderType]);
-    const handleEditorChange = useCallback((value: string) => {
-        setTabs(prev => ({...prev, [activeTab]: value}))
-    }, [activeTab]);
+
     const handleCompileAndApply = async () => {
 
-        const newVertexShader = injectUniformsIntoShader(tabs.vertex);
-        const newFragmentShader = injectUniformsIntoShader(tabs.fragment);
-        const newComputeShader = injectUniformsIntoShader(tabs.compute);
+        const newVertexShader = injectUniformsIntoShader(userVertexShader);
+        const newFragmentShader = injectUniformsIntoShader(userFragmentShader);
+        const newComputeShader = injectUniformsIntoShader(userComputeShader);
 
-        const computeStructs = getStructFromBufferBinding(newComputeShader, 'input');
-        const workGroupSize = getWorkgroupSize(newComputeShader);
-        console.log("computeStructs", computeStructs);
+        let options: any | undefined = undefined;
+        if (userComputeShader != '') {
+            const computeStructs = getStructFromBufferBinding(newComputeShader, 'input');
+            const workGroupSize = getWorkgroupSize(newComputeShader);
+            console.log("computeStructs", computeStructs);
+            options = {
+                count: 2000,
+                inOutBufferStruct: computeStructs,
+                workgroupSize: workGroupSize,
+            }
+        }
 
-        setVertexShader(newVertexShader);
-        setFragmentShader(newFragmentShader);
-        setComputeShader(newComputeShader);
+        setFullVertexShader(newVertexShader);
+        setFullFragmentShader(newFragmentShader);
+        setFullComputeShader(newComputeShader);
 
         console.log(newVertexShader);
         console.log(newComputeShader);
@@ -94,34 +107,44 @@ function App() {
                     computeShader: newComputeShader,
                     vertexShader: newVertexShader,
                     fragmentShader: newFragmentShader,
-                }, {
-                    count: 2000,
-                    inOutBufferStruct: computeStructs,
-                    workgroupSize: workGroupSize,
-                });
+                }, options);
                 console.log('Shaders recompiled successfully!');
-            } catch (error) {
+            }
+            catch (error) {
                 console.error('Failed to recompile shaders:', error);
             }
         }
     }
     registerWGSL();
+
+    const handleEditorChange = useCallback((value: string) => {
+        setActiveTab(current => {
+            if (current === 'vertex') {
+                setUserVertexShader(value);
+            } else if (current === 'fragment') {
+                setUserFragmentShader(value);
+            } else if (current === 'compute') {
+                setUserComputeShader(value);
+            }
+            return current; // Return unchanged
+        });
+    }, []);
     return (
         <>
             <div className={'flex flex-row h-screen w-screen'}>
                 <Panel resizeDirection={"horizontal"} resizable={true} className={'w-[66vw] h-[90vh]'}>
-                    <WebGPUCanvas rendererRef={rendererRef} computeShader={computeShader}
-                                  fragmentShader={fragmentShader} vertexShader={vertexShader}></WebGPUCanvas>
+                    <WebGPUCanvas rendererRef={rendererRef} computeShader={fullComputeShader}
+                                  fragmentShader={fullFragmentShader} vertexShader={fullVertexShader}></WebGPUCanvas>
                 </Panel>
 
                 <Panel grow={true} resizeDirection={"horizontal"} resizable={true} className={"h-[90vh] mx-3"}>
                     <ButtonLightRectangle value={'Compile & Apply Shaders'} className={'mb-2 w-full'}
                                           onClick={handleCompileAndApply}/>
                     <MonacoEditor
-                        value={tabs[activeTab]}
+                        value={activeTab === 'vertex' ? userVertexShader : activeTab ===
+                                                                           'fragment' ? userFragmentShader : userComputeShader}
                         language="wgsl"
-                        onChange={handleEditorChange
-                        }
+                        onChange={handleEditorChange}
                         tabs={getTabs()}
                         onTabChange={(s) => {
                             const t = s as tabs;
