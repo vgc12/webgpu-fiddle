@@ -15,6 +15,7 @@ export class Time {
     start() {
 
         this.reset()
+        this.update();
         this.animationFrameId = requestAnimationFrame(this.update)
 
     }

@@ -1,13 +1,14 @@
-﻿import {useEffect, useRef} from 'react';
+import {useEffect, useRef} from 'react';
 import * as monaco from 'monaco-editor';
 import {cn} from '@/utils/utils';
-import {ButtonLightRectangle} from "@/components/ui/button.tsx";
+import type {shader_diagnostic} from '@/graphics/shader-validator.tsx';
 
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
 import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
+import {ButtonLightRectangle} from "@/components/ui/button.tsx";
 
 // Configure Monaco Editor workers
 self.MonacoEnvironment = {
@@ -41,24 +42,37 @@ interface MonacoEditorProps {
     value: string;
     language: string;
     onChange?: (value: string) => void;
+    onCompile?: () => void;
+    diagnostics?: shader_diagnostic[];
     height?: string;
     className?: string;
     tabs?: Tab[];
+    activeTabId?: string;
     onTabChange?: (tabId: string) => void;
 }
+
+const SEVERITY_MAP: Record<string, monaco.MarkerSeverity> = {
+    error: monaco.MarkerSeverity.Error,
+    warning: monaco.MarkerSeverity.Warning,
+    info: monaco.MarkerSeverity.Info,
+};
 
 export function MonacoEditor({
                                  value,
                                  language,
                                  onChange,
+                                 onCompile,
+                                 diagnostics,
                                  className,
                                  tabs,
+                                 activeTabId,
                                  onTabChange
                              }: MonacoEditorProps) {
     const editorRef = useRef<HTMLDivElement>(null);
     const monacoRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
     const isUpdatingFromProp = useRef(false);
-    const disposableRef = useRef<monaco.IDisposable | null>(null);
+    const onCompileRef = useRef(onCompile);
+    onCompileRef.current = onCompile;
 
     useEffect(() => {
         if (editorRef.current && !monacoRef.current) {
@@ -71,31 +85,30 @@ export function MonacoEditor({
                 minimap: {enabled: true},
                 scrollBeyondLastLine: false,
                 fontSize: 14,
+                tabSize: 4,
+                bracketPairColorization: {enabled: true},
+                guides: {bracketPairs: true},
+                renderWhitespace: 'selection',
             });
 
-            disposableRef.current = monacoRef.current.onDidChangeModelContent(() => {
+            monacoRef.current.onDidChangeModelContent(() => {
                 if (!isUpdatingFromProp.current && monacoRef.current) {
                     onChange?.(monacoRef.current.getValue());
                 }
             });
+
+            monacoRef.current.addAction({
+                id: 'compile-shaders',
+                label: 'Compile & Apply Shaders',
+                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
+                run: () => onCompileRef.current?.(),
+            });
         }
 
         return () => {
-            if (disposableRef.current) {
-                try {
-                    disposableRef.current.dispose();
-                }
-                catch (e) {
-                    // Ignore cancellation errors during cleanup
-                }
-                disposableRef.current = null;
-            }
-
             if (monacoRef.current) {
                 try {
-                    if (monacoRef && monacoRef.current) {
-                        monacoRef.current.dispose();
-                    }
+                    monacoRef.current.dispose();
                 }
                 catch (e) {
                     // Ignore cancellation errors during cleanup
@@ -124,9 +137,35 @@ export function MonacoEditor({
         }
     }, [language]);
 
-    const handleTabClick = (tabId: string) => {
-        onTabChange?.(tabId);
-    };
+    useEffect(() => {
+        const editorModel = monacoRef.current?.getModel();
+        if (!editorModel) {
+            return;
+        }
+
+        if (!diagnostics || diagnostics.length === 0) {
+            monaco.editor.setModelMarkers(editorModel, 'wgsl', []);
+            return;
+        }
+
+        const markers: monaco.editor.IMarkerData[] = diagnostics.map(d => {
+            const lineLength = editorModel.getLineLength(d.line) ?? 0;
+            const endCol = d.length > 0
+                           ? d.column + d.length
+                           : lineLength + 1;
+
+            return {
+                severity: SEVERITY_MAP[d.severity] ?? monaco.MarkerSeverity.Error,
+                message: d.message,
+                startLineNumber: d.line,
+                startColumn: d.column,
+                endLineNumber: d.line,
+                endColumn: endCol,
+            };
+        });
+
+        monaco.editor.setModelMarkers(editorModel, 'wgsl', markers);
+    }, [diagnostics]);
 
     if (!tabs || tabs.length === 0) {
         return <div ref={editorRef} className={className}/>;
@@ -138,8 +177,12 @@ export function MonacoEditor({
                 {tabs.map(tab => (
                     <ButtonLightRectangle
                         key={tab.id}
-                        onClick={() => handleTabClick(tab.id)}
-                        className={cn()}
+                        onClick={() => onTabChange?.(tab.id)}
+                        className={cn(
+                            tab.id === activeTabId
+                            ? 'bg-[#1e1e1e] text-white border border-gray-700 border-b-[#1e1e1e] -mb-px'
+                            : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
+                        )}
                     >
                         {tab.label}
                     </ButtonLightRectangle>

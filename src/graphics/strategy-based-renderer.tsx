@@ -26,6 +26,7 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
         this.shaderConfig = newShaderConfig;
         this.initializeResources();
         await this.createPipelines();
+        this.time.reset();
     }
 
     protected initializeResources(): void {

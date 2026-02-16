@@ -28,6 +28,7 @@ export class ParticlePipelineStrategy implements IPipelineStrategy {
         }
     ): Promise<{ compute: GPUComputePipeline; render: GPURenderPipeline }> {
         // Create shader modules
+
         const computeShaderModule = resourceManager.createShaderModule(
             shaderConfig.computeShader,
             'Particle Update Shader'
@@ -87,7 +88,7 @@ export class ParticleResourceStrategy implements IResourceStrategy {
 
     constructor(private computeConfig: ComputeConfig) {}
 
-     
+
     initializeResources(device: GPUDevice, resourceManager: GPUResourceManager, _config: {
         resolution: { width: number; height: number }
     }): void {

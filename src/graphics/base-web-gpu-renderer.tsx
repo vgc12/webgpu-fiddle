@@ -26,15 +26,29 @@ export abstract class BaseWebGPURenderer implements IRenderer {
         this.animationController = new AnimationController();
     }
 
+    get device(): GPUDevice | null {
+        try {
+            return this.gpuContext.Device;
+        }
+        catch {
+            return null;
+        }
+    }
+
     async start(): Promise<void> {
         this.time.start();
         await this.initialize();
+
         this.animationController.start(this.update);
     }
 
     stop(): void {
         this.time.stop();
         this.animationController.stop();
+    }
+
+    resize(width: number, height: number): void {
+        this.resolution = {width, height};
     }
 
     destroy(): void {
