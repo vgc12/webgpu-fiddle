@@ -1,80 +1,27 @@
-import '../style.css'
-import {WebGPUCanvas} from "@/components/ui/main-canvas.tsx";
-import {useCallback, useEffect, useRef, useState} from "react";
-import {MonacoEditor, type Tab} from "@/monaco/monaco-editor.tsx";
-import {Panel} from "@/components/ui/panel.tsx";
-import {ButtonLightRectangle} from "@/components/ui/button.tsx";
-
+﻿import type {ShaderConfig} from "@/graphics/shader_config.tsx";
 import {
-    canvasShaderConfig,
+    CanvasShaderConfig,
     getStructFromBufferBinding,
     getWorkgroupSize,
     injectUniformsIntoShader,
-    particleShaderConfig
+    ParticleShaderConfig
 } from "@/graphics/shader-builder.tsx";
-import {useDarkMode} from "@/components/use-dark-mode.tsx";
+import {useCallback, useEffect, useRef, useState} from "react";
 import type {IRenderer} from "@/graphics/i-renderer.tsx";
-import {generateVariableDocumentation} from "@/graphics/generate-variable-documentation.tsx";
-import type {ShaderConfig} from "@/graphics/shader_config.tsx";
 import {type shader_diagnostic, validateShader} from "@/graphics/shader-validator.tsx";
+import {MonacoEditor, type Tab} from "@/monaco/monaco-editor.tsx";
 import type {ComputeConfig} from "@/graphics/compute-config.tsx";
+import {Panel} from "@/components/ui/panel.tsx";
+import {WebGPUCanvas} from "@/components/ui/main-canvas.tsx";
+import {ButtonLightRectangle} from "@/components/ui/button.tsx";
+import type {tab_id} from "@/components/app.tsx";
+import {buildInitialShaders} from "@/components/build-initial-shaders.tsx";
 
-const TABS = {
-    compute: 'compute',
-    vertex: 'vertex',
-    fragment: 'fragment',
-} as const;
-
-type tab_id = typeof TABS[keyof typeof TABS];
-
-
-function buildInitialShaders(config: ShaderConfig): Record<tab_id, string> {
-    return {
-        vertex: generateVariableDocumentation('vertex') + '\n' + config.vertexShader,
-        fragment: generateVariableDocumentation('fragment') + '\n' + config.fragmentShader,
-        compute: config.computeShader
-                 ? generateVariableDocumentation('compute') + '\n' + config.computeShader
-                 : '',
-    };
-}
-
-function ShaderSelector({
-                            onSelect,
-                        }: {
-    onSelect: (type: 'canvas' | 'particle') => void;
-}) {
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-white dark:bg-neutral-800 rounded-lg p-6 shadow-xl min-w-[300px]">
-                <h2 className="text-lg font-semibold mb-4">Select Shader Type</h2>
-                <div className="flex flex-col gap-3">
-                    <button
-                        className="px-4 py-3 rounded border border-neutral-300 dark:border-neutral-600
-                       hover:bg-neutral-100 dark:hover:bg-neutral-700 text-left"
-                        onClick={() => onSelect('canvas')}
-                    >
-                        <div className="font-medium">Canvas Shader</div>
-                        <div className="text-sm text-neutral-500">Full-screen fragment shader</div>
-                    </button>
-                    <button
-                        className="px-4 py-3 rounded border border-neutral-300 dark:border-neutral-600
-                       hover:bg-neutral-100 dark:hover:bg-neutral-700 text-left"
-                        onClick={() => onSelect('particle')}
-                    >
-                        <div className="font-medium">Particle Shader</div>
-                        <div className="text-sm text-neutral-500">Compute + vertex/fragment pipeline</div>
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function ShaderWorkspace({shaderType, onChangeType}: {
+export function ShaderWorkspace({shaderType, onChangeType}: {
     shaderType: 'canvas' | 'particle';
     onChangeType: () => void;
 }) {
-    const shaderConfig: ShaderConfig = shaderType === 'canvas' ? canvasShaderConfig : particleShaderConfig;
+    const shaderConfig: ShaderConfig = shaderType === 'canvas' ? CanvasShaderConfig : ParticleShaderConfig;
     const initialShaders = buildInitialShaders(shaderConfig);
 
     const [activeTab, setActiveTab] = useState<tab_id>('vertex');
@@ -227,23 +174,3 @@ function ShaderWorkspace({shaderType, onChangeType}: {
         </div>
     );
 }
-
-function App() {
-    useDarkMode();
-
-    const [shaderType, setShaderType] = useState<'canvas' | 'particle' | null>(null);
-
-    if (shaderType === null) {
-        return <ShaderSelector onSelect={setShaderType}/>;
-    }
-
-    return (
-        <ShaderWorkspace
-            key={shaderType}
-            shaderType={shaderType}
-            onChangeType={() => setShaderType(null)}
-        />
-    );
-}
-
-export default App

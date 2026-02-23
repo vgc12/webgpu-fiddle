@@ -1,19 +1,19 @@
 ﻿import {TypeInfo} from "@/graphics/type-info.tsx";
-import defaultParticleCompute from '@/shaders/default.particle.compute.wgsl';
-import defaultParticleVertexCompute from '@/shaders/default.particle.vertex.wgsl';
-import defaultParticleFragmentCompute from '@/shaders/default.particle.fragment.wgsl';
-import defaultCanvasVertexShader from '@/shaders/default.canvas.vertex.wgsl';
-import defaultCanvasFragmentShader from '@/shaders/default.canvas.fragment.wgsl';
+import defaultParticleCompute from '@/shaders/particle.compute.squares.wgsl';
+import defaultParticleVertexCompute from '@/shaders/particle.vertex.squares.wgsl';
+import defaultParticleFragmentCompute from '@/shaders/particle.fragment.squares.wgsl';
+import defaultCanvasVertexShader from '@/shaders/canvas.vertex.blank.wgsl';
+import defaultCanvasFragmentShader from '@/shaders/canvas.fragment.sphere-sdf.wgsl';
 
 import uniformStruct from '@/shaders/uniforms.wgsl';
 import type {ShaderConfig} from "@/graphics/shader_config.tsx";
 
-export const canvasShaderConfig: ShaderConfig = {
+export const CanvasShaderConfig: ShaderConfig = {
     vertexShader: defaultCanvasVertexShader,
     fragmentShader: defaultCanvasFragmentShader
 };
 
-export const particleShaderConfig: ShaderConfig = {
+export const ParticleShaderConfig: ShaderConfig = {
     computeShader: defaultParticleCompute,
     vertexShader: defaultParticleVertexCompute,
     fragmentShader: defaultParticleFragmentCompute
@@ -46,9 +46,9 @@ export function injectUniformsIntoShader(wgslCode: string): string {
     wgslCode = uniformStruct + '\n' + wgslCode;
 
     const uniformDefs = `
-    let resolution = uniforms.resolution;
-    let aspectRatio = uniforms.aspectRatio;
-    let time = uniforms.time;`;
+    resolution = uniforms.resolution;
+    aspectRatio = uniforms.aspectRatio;
+    time = uniforms.time;`;
 
     // Regex to find any function with @compute, @vertex, or @fragment attribute
     // Captures the entire function declaration up to and including the opening brace
