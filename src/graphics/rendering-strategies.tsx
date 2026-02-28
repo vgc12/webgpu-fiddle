@@ -38,6 +38,8 @@ export interface IRenderStrategy {
         textureView: GPUTextureView,
         pipeline: GPURenderPipeline,
         bindGroup: GPUBindGroup,
+        drawCount: number,
+        instanceCount: number,
         config: any
     ): void;
 }

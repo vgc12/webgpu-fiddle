@@ -179,9 +179,6 @@ export function MonacoEditor({
                         key={tab.id}
                         onClick={() => onTabChange?.(tab.id)}
                         className={cn(
-                            tab.id === activeTabId
-                            ? 'bg-[#1e1e1e] text-white border border-gray-700 border-b-[#1e1e1e] -mb-px'
-                            : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
                         )}
                     >
                         {tab.label}

@@ -7,6 +7,7 @@ import {
 } from "@/graphics/particle-strategies.tsx";
 import type {ShaderConfig} from "@/graphics/shader_config.tsx";
 import type {ComputeConfig} from "@/graphics/compute-config.tsx";
+import type {render_settings} from "@/components/app.tsx";
 
 /**
  * Particle Renderer draws multiple particles at once
@@ -17,18 +18,19 @@ export class ParticleRenderer extends StrategyBasedRenderer {
     constructor(
         canvas: HTMLCanvasElement,
         shaderConfig: ShaderConfig,
+        renderSettings : render_settings,
         private computeConfig: ComputeConfig = {
-            count: 1000,
+            particleCount : 2000,
             inOutBufferStruct: null,
             workgroupSize: [64, 1, 1]
         },
         resolution?: { width: number; height: number }
     ) {
         // Create particle-specific strategies
-        const resourceStrategy = new ParticleResourceStrategy(computeConfig);
+        const resourceStrategy = new ParticleResourceStrategy(computeConfig, renderSettings.instanceCount);
         const pipelineStrategy = new ParticlePipelineStrategy();
-        const updateStrategy = new ParticleComputeUpdateStrategy(computeConfig, resourceStrategy);
-        const renderStrategy = new ParticleRenderStrategy(computeConfig.count);
+        const updateStrategy = new ParticleComputeUpdateStrategy(computeConfig, resourceStrategy, renderSettings.instanceCount);
+        const renderStrategy = new ParticleRenderStrategy();
 
         super(
             canvas,
@@ -37,6 +39,7 @@ export class ParticleRenderer extends StrategyBasedRenderer {
             resourceStrategy,
             updateStrategy,
             renderStrategy,
+            renderSettings,
             resolution
         );
 
@@ -45,20 +48,21 @@ export class ParticleRenderer extends StrategyBasedRenderer {
 
     async recompileShaders(
         newShaderConfig: ShaderConfig,
-        options?: { computeConfig?: Partial<ComputeConfig> }
+        options?: { computeConfig?: Partial<ComputeConfig>, renderSettings?: Partial<render_settings> }
     ): Promise<void> {
         // Update compute config if provided
         if (options?.computeConfig) {
             this.computeConfig = {...this.computeConfig, ...options.computeConfig};
 
             // Recreate strategies with new config
-            this.particleResourceStrategy = new ParticleResourceStrategy(this.computeConfig);
+            this.particleResourceStrategy = new ParticleResourceStrategy(this.computeConfig, this.renderSettings.instanceCount);
             this.resourceStrategy = this.particleResourceStrategy;
             this.updateStrategy = new ParticleComputeUpdateStrategy(
                 this.computeConfig,
-                this.particleResourceStrategy
+                this.particleResourceStrategy,
+                this.renderSettings.instanceCount
             );
-            this.renderStrategy = new ParticleRenderStrategy(this.computeConfig.count);
+            this.renderStrategy = new ParticleRenderStrategy();
         }
 
         await super.recompileShaders(newShaderConfig);

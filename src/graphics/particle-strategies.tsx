@@ -29,6 +29,7 @@ export class ParticlePipelineStrategy implements IPipelineStrategy {
     ): Promise<{ compute: GPUComputePipeline; render: GPURenderPipeline }> {
         // Create shader modules
 
+    
         const computeShaderModule = resourceManager.createShaderModule(
             shaderConfig.computeShader,
             'Particle Update Shader'
@@ -85,8 +86,9 @@ export class ParticleResourceStrategy implements IResourceStrategy {
     private computeBindGroupB: GPUBindGroup;
     private renderLayout: GPUBindGroupLayout;
     private computeLayout: GPUBindGroupLayout;
+    
 
-    constructor(private computeConfig: ComputeConfig) {}
+    constructor(private computeConfig: ComputeConfig, private particleCount: number) {}
 
 
     initializeResources(device: GPUDevice, resourceManager: GPUResourceManager, _config: {
@@ -99,7 +101,7 @@ export class ParticleResourceStrategy implements IResourceStrategy {
         this.inOutBuffer = new InputOutputBuffers(
             device,
             resourceManager,
-            this.computeConfig
+            this.computeConfig,
         );
 
         this.uniformBuffer = new UniformBuffer(device, resourceManager);
@@ -162,7 +164,7 @@ export class ParticleResourceStrategy implements IResourceStrategy {
         }
 
         const initialData = new Float32Array(
-            this.computeConfig.count * this.computeConfig.inOutBufferStruct.size / 4
+            this.particleCount * this.computeConfig.inOutBufferStruct.size / 4
         );
         for (let i = 0; i < initialData.length; i++) {
             initialData[i] = Math.random() * 2 - 1; // Random values between -1 and 1
@@ -185,7 +187,8 @@ export class ParticleComputeUpdateStrategy implements IUpdateStrategy {
 
     constructor(
         private computeConfig: ComputeConfig,
-        private resourceStrategy: ParticleResourceStrategy
+        private resourceStrategy: ParticleResourceStrategy,
+        private particleCount: number
     ) {}
 
     update(encoder: GPUCommandEncoder, pipeline: GPUComputePipeline): void {
@@ -200,7 +203,7 @@ export class ParticleComputeUpdateStrategy implements IUpdateStrategy {
         computePass.setBindGroup(0, this.pingPong.getNext());
 
         const workgroupCount = calculateWorkgroupCount(
-            this.computeConfig.count,
+            this.particleCount,
             this.computeConfig.workgroupSize
         );
 
@@ -222,13 +225,13 @@ export class ParticleComputeUpdateStrategy implements IUpdateStrategy {
  * Particle render strategy
  */
 export class ParticleRenderStrategy implements IRenderStrategy {
-    constructor(private particleCount: number) {}
-
     render(
         encoder: GPUCommandEncoder,
         textureView: GPUTextureView,
         pipeline: GPURenderPipeline,
         bindGroup: GPUBindGroup,
+        drawCount: number,
+        instanceCount: number,
     ): void {
         const renderPass = encoder.beginRenderPass({
             colorAttachments: [{
@@ -241,7 +244,7 @@ export class ParticleRenderStrategy implements IRenderStrategy {
 
         renderPass.setPipeline(pipeline);
         renderPass.setBindGroup(0, bindGroup);
-        renderPass.draw(6, this.particleCount); // 6 vertices per particle (2 triangles)
+        renderPass.draw(drawCount, instanceCount);
         renderPass.end();
     }
 }

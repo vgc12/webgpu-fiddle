@@ -3,6 +3,7 @@ import type {IRenderer} from "@/graphics/i-renderer.tsx";
 import {CanvasRenderer} from "@/graphics/canvas-renderer.tsx";
 import {ParticleRenderer} from "@/graphics/particle-renderer.tsx";
 import type {ComputeConfig} from "@/graphics/compute-config.tsx";
+import type {render_settings} from "@/components/app.tsx";
 
 interface WebGPUCanvasProps {
     rendererRef?: React.RefObject<IRenderer | null>;
@@ -11,6 +12,7 @@ interface WebGPUCanvasProps {
     shaderType?: 'canvas' | 'particle';
     fragmentShader?: string;
     computeConfig?: ComputeConfig | null;
+    renderSettings: render_settings
 }
 
 export const WebGPUCanvas: React.FC<WebGPUCanvasProps> = ({
@@ -19,7 +21,8 @@ export const WebGPUCanvas: React.FC<WebGPUCanvasProps> = ({
                                                               vertexShader = '',
                                                               fragmentShader = '',
                                                               shaderType = null,
-                                                              computeConfig = null
+                                                              computeConfig = null,
+                                                              renderSettings = null,
                                                           }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -37,34 +40,32 @@ export const WebGPUCanvas: React.FC<WebGPUCanvasProps> = ({
 
 
         let renderer: IRenderer | undefined;
-
-        switch (shaderType) {
-            case 'canvas':
-                renderer = new
-                CanvasRenderer(canvas, {
-                    computeShader: computeShader,
-                    vertexShader: vertexShader,
-                    fragmentShader: fragmentShader
-                }, {width: canvas.width, height: canvas.height});
-                break;
-            case 'particle':
-                if (computeConfig) {
-                    renderer = new ParticleRenderer(canvas, {
+        if (renderSettings) {
+            switch (shaderType) {
+                case 'canvas':
+                    renderer = new CanvasRenderer(canvas, {
                         computeShader: computeShader,
                         vertexShader: vertexShader,
-                        fragmentShader: fragmentShader,
-
-                    }, computeConfig, {width: canvas.width, height: canvas.height});
-                }
-                break;
-            default:
-                renderer = new CanvasRenderer(canvas, {
-                    computeShader: computeShader,
-                    vertexShader: vertexShader,
-                    fragmentShader: fragmentShader
-                }, {width: canvas.width, height: canvas.height});
+                        fragmentShader: fragmentShader
+                    }, renderSettings, {width: canvas.width, height: canvas.height});
+                    break;
+                case 'particle':
+                    if (computeConfig && renderSettings) {
+                        renderer = new ParticleRenderer(canvas, {
+                            computeShader: computeShader,
+                            vertexShader: vertexShader,
+                            fragmentShader: fragmentShader,
+                        }, renderSettings, computeConfig, {width: canvas.width, height: canvas.height});
+                    }
+                    break;
+                default:
+                    renderer = new CanvasRenderer(canvas, {
+                        computeShader: computeShader,
+                        vertexShader: vertexShader,
+                        fragmentShader: fragmentShader
+                    }, renderSettings, {width: canvas.width, height: canvas.height});
+            }
         }
-
         if (renderer === undefined) {
             console.error('Failed to create renderer: Invalid shader type or missing compute config');
             return;

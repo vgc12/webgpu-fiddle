@@ -38,11 +38,12 @@ export class InputOutputBuffers implements IBufferSystem {
     private bufferA: GPUBuffer;
     private bufferB: GPUBuffer;
     private useBufferA: boolean = true;
+    
 
     constructor(
         private device: GPUDevice,
         private resourceManager: GPUResourceManager,
-        private config: ComputeConfig
+        private config: ComputeConfig,
     ) {
         this.initializeBuffers();
     }
@@ -64,7 +65,7 @@ export class InputOutputBuffers implements IBufferSystem {
         if (this.config.inOutBufferStruct == null) {
             throw new Error("The buffer struct could not be found in the compute shader!");
         }
-        const bufferSize = this.config.count * this.config.inOutBufferStruct.size;
+        const bufferSize = this.config.particleCount * this.config.inOutBufferStruct.size;
         const usage = GPUBufferUsage.STORAGE |
             GPUBufferUsage.COPY_DST |
             GPUBufferUsage.COPY_SRC |

@@ -1,6 +1,7 @@
 ﻿import type {ShaderConfig} from "@/graphics/shader_config.tsx";
 import type {IPipelineStrategy, IRenderStrategy, IResourceStrategy, IUpdateStrategy} from "./rendering-strategies";
 import {BaseWebGPURenderer} from "@/graphics/base-web-gpu-renderer.tsx";
+import type {render_settings} from "@/components/app.tsx";
 
 
 /**
@@ -17,10 +18,12 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
         protected resourceStrategy: IResourceStrategy,
         protected updateStrategy: IUpdateStrategy,
         protected renderStrategy: IRenderStrategy,
+        protected renderSettings: render_settings,
         resolution?: { width: number; height: number }
     ) {
         super(canvas, shaderConfig, resolution);
     }
+
 
     async recompileShaders(newShaderConfig: ShaderConfig): Promise<void> {
         this.shaderConfig = newShaderConfig;
@@ -74,12 +77,15 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
             textureView,
             this.pipelines.render,
             bindGroups.render[0],
+            this.renderSettings.vertexDrawCount,
+            this.renderSettings.instanceCount,
             {}
         );
 
         device.queue.submit([encoder.finish()]);
     };
 
+    
     /**
      * Hook for updating uniforms - can be overridden by subclasses
      */

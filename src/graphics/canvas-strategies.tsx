@@ -61,6 +61,8 @@ export class CanvasRenderStrategy implements IRenderStrategy {
         textureView: GPUTextureView,
         pipeline: GPURenderPipeline,
         bindGroup: GPUBindGroup,
+        drawCount: number,
+        instanceCount: number,
         _config?: never
     ): void {
         const renderPass = encoder.beginRenderPass({
@@ -74,7 +76,7 @@ export class CanvasRenderStrategy implements IRenderStrategy {
 
         renderPass.setPipeline(pipeline);
         renderPass.setBindGroup(0, bindGroup);
-        renderPass.draw(6, 1); // 6 vertices to make a quad (2 triangles)
+        renderPass.draw(drawCount, instanceCount); 
         renderPass.end();
     }
 }

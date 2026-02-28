@@ -1,7 +1,7 @@
 ﻿import type {StructInfo} from "@/graphics/shader-builder.tsx";
 
 export interface ComputeConfig {
-    count: number;
+    particleCount: number;
     inOutBufferStruct: StructInfo | null;
     workgroupSize: [number, number, number];
 }

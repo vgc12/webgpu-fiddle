@@ -14,12 +14,14 @@ import type {ComputeConfig} from "@/graphics/compute-config.tsx";
 import {Panel} from "@/components/ui/panel.tsx";
 import {WebGPUCanvas} from "@/components/ui/main-canvas.tsx";
 import {ButtonLightRectangle} from "@/components/ui/button.tsx";
-import type {tab_id} from "@/components/app.tsx";
+import type {render_settings, tab_id} from "@/components/app.tsx";
 import {buildInitialShaders} from "@/components/build-initial-shaders.tsx";
 
-export function ShaderWorkspace({shaderType, onChangeType}: {
-    shaderType: 'canvas' | 'particle';
-    onChangeType: () => void;
+export function ShaderWorkspace({shaderType, renderSettings, onChangeRenderSettings, onChangeShaderType}: {
+    shaderType: 'canvas' | 'particle'
+    renderSettings: render_settings
+    onChangeShaderType: () => void;
+    onChangeRenderSettings: () => void;
 }) {
     const shaderConfig: ShaderConfig = shaderType === 'canvas' ? CanvasShaderConfig : ParticleShaderConfig;
     const initialShaders = buildInitialShaders(shaderConfig);
@@ -75,9 +77,9 @@ export function ShaderWorkspace({shaderType, onChangeType}: {
     let options: ComputeConfig | undefined = undefined;
     if (userShaders.compute != '') {
         options = {
-            count: 2000,
             inOutBufferStruct: getStructFromBufferBinding(fullComputeShader, 'input'),
             workgroupSize: getWorkgroupSize(fullComputeShader),
+            particleCount: renderSettings.instanceCount,
         }
     }
     const handleCompileAndApply = async () => {
@@ -116,9 +118,9 @@ export function ShaderWorkspace({shaderType, onChangeType}: {
         let options: ComputeConfig | undefined = undefined;
         if (userShaders.compute != '') {
             options = {
-                count: 2000,
                 inOutBufferStruct: getStructFromBufferBinding(newComputeShader, 'input'),
                 workgroupSize: getWorkgroupSize(newComputeShader),
+                particleCount: renderSettings.instanceCount,
             }
         }
 
@@ -147,7 +149,8 @@ export function ShaderWorkspace({shaderType, onChangeType}: {
     return (
         <div className={'flex flex-row h-screen w-screen'}>
             <Panel resizeDirection={"horizontal"} resizable={true} className={'w-[66vw] h-[90vh]'}>
-                <WebGPUCanvas rendererRef={rendererRef} computeConfig={options} shaderType={shaderType}
+                <WebGPUCanvas rendererRef={rendererRef} computeConfig={options} renderSettings={renderSettings}
+                              shaderType={shaderType}
                               computeShader={fullComputeShader}
                               fragmentShader={fullFragmentShader}
                               vertexShader={fullVertexShader}></WebGPUCanvas>
@@ -155,9 +158,10 @@ export function ShaderWorkspace({shaderType, onChangeType}: {
 
             <Panel grow={true} resizeDirection={"horizontal"} resizable={true} className={"h-[90vh] mx-3"}>
                 <div className="flex gap-2 mb-2">
-                    <ButtonLightRectangle value={'Compile & Apply Shaders'} className={'flex-1'}
+                    <ButtonLightRectangle value={'Compile & Apply Shaders'}
                                           onClick={handleCompileAndApply}/>
-                    <ButtonLightRectangle value={'Change Shader Type'} onClick={onChangeType}/>
+                    <ButtonLightRectangle onClick={onChangeShaderType}>Change Shader Type</ButtonLightRectangle>
+                    <ButtonLightRectangle onClick={onChangeRenderSettings}>Render Settings</ButtonLightRectangle>
                 </div>
                 <MonacoEditor
                     value={userShaders[activeTab]}

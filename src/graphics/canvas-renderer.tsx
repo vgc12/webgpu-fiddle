@@ -3,6 +3,7 @@ import {StrategyBasedRenderer} from "@/graphics/strategy-based-renderer.tsx";
 import {NullUpdateStrategy} from "@/graphics/particle-strategies.tsx";
 import type {ShaderConfig} from "@/graphics/shader_config.tsx";
 import {CanvasPipelineStrategy, CanvasRenderStrategy, CanvasResourceStrategy} from "@/graphics/canvas-strategies.tsx";
+import type {render_settings} from "@/components/app.tsx";
 
 export class CanvasRenderer extends StrategyBasedRenderer {
     private canvasResourceStrategy: CanvasResourceStrategy;
@@ -10,11 +11,10 @@ export class CanvasRenderer extends StrategyBasedRenderer {
     constructor(
         canvas: HTMLCanvasElement,
         shaderConfig: ShaderConfig,
+        renderSettings: render_settings,
         resolution?: { width: number; height: number }
     ) {
-        // Create particle-specific strategies
         const resourceStrategy = new CanvasResourceStrategy();
-
         const pipelineStrategy = new CanvasPipelineStrategy();
         const updateStrategy = new NullUpdateStrategy();
         const renderStrategy = new CanvasRenderStrategy();
@@ -26,6 +26,7 @@ export class CanvasRenderer extends StrategyBasedRenderer {
             resourceStrategy,
             updateStrategy,
             renderStrategy,
+            renderSettings,
             resolution
         );
 
