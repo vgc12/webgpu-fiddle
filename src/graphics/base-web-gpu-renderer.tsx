@@ -17,7 +17,7 @@ export abstract class BaseWebGPURenderer implements IRenderer {
     protected initialized: boolean = false;
 
     protected constructor(
-        canvas: HTMLCanvasElement,
+        protected canvas: HTMLCanvasElement,
         protected shaderConfig: ShaderConfig,
         protected resolution: { width: number; height: number } = {width: 1920, height: 1080}
     ) {

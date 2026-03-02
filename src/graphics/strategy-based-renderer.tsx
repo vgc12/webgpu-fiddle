@@ -10,6 +10,19 @@ import type {render_settings} from "@/components/app.tsx";
  */
 export class StrategyBasedRenderer extends BaseWebGPURenderer {
     protected pipelines: { compute?: GPUComputePipeline; render: GPURenderPipeline };
+    protected mousePosition = { x: 0, y: 0 };
+    
+    handleMouseMove = (e) => {
+       
+        if (!this.canvas) {
+            return;
+        }
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        this.mousePosition = { x, y };
+    };
+
 
     constructor(
         canvas: HTMLCanvasElement,
@@ -22,6 +35,7 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
         resolution?: { width: number; height: number }
     ) {
         super(canvas, shaderConfig, resolution);
+        canvas.addEventListener('mousemove', this.handleMouseMove);
     }
 
 
@@ -85,7 +99,7 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
         device.queue.submit([encoder.finish()]);
     };
 
-    
+
     /**
      * Hook for updating uniforms - can be overridden by subclasses
      */

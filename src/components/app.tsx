@@ -1,5 +1,5 @@
 import '../style.css'
-import {useState} from "react";
+import React, {useState} from "react";
 import {useDarkMode} from "@/components/use-dark-mode.tsx";
 import {ShaderWorkspace} from "@/components/shader-workspace.tsx";
 import {ButtonLightRectangle} from "@/components/ui/button.tsx";
@@ -12,7 +12,6 @@ const TABS = {
 
 export type tab_id = typeof TABS[keyof typeof TABS];
 
-// Fix: destructure { children } from props, not just `children`
 function Popup({children}: { children?: React.ReactNode }) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -64,7 +63,7 @@ function RenderSettings({
     onConfirm: (settings: render_settings) => void;
 }) {
     const [vertexDrawCount, setVertexDrawCount] = useState(6);
-    const [particleCount, setParticleCount] = useState(1);
+    const [particleCount, setInstanceCount] = useState(1);
 
     return (
         <Popup>
@@ -83,7 +82,7 @@ function RenderSettings({
                 <input
                     type="number"
                     value={particleCount}
-                    onChange={e => setParticleCount(Number(e.target.value))}
+                    onChange={e => setInstanceCount(Number(e.target.value))}
                     className="px-3 py-2 rounded border border-neutral-300 dark:border-neutral-600
                                bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -130,7 +129,7 @@ function App() {
         <ShaderWorkspace
             key={shaderType}
             shaderType={shaderType}
-            renderSettings = {renderSettings}
+            renderSettings={renderSettings}
             onChangeShaderType={() => setShaderSelectorOpen(true)}
             onChangeRenderSettings={() => setRenderSettingsOpen(true)}
         />

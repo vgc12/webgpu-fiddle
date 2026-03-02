@@ -8,6 +8,7 @@ import type {render_settings} from "@/components/app.tsx";
 export class CanvasRenderer extends StrategyBasedRenderer {
     private canvasResourceStrategy: CanvasResourceStrategy;
 
+
     constructor(
         canvas: HTMLCanvasElement,
         shaderConfig: ShaderConfig,

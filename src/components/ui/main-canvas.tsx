@@ -1,9 +1,15 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import type {IRenderer} from "@/graphics/i-renderer.tsx";
 import {CanvasRenderer} from "@/graphics/canvas-renderer.tsx";
 import {ParticleRenderer} from "@/graphics/particle-renderer.tsx";
 import type {ComputeConfig} from "@/graphics/compute-config.tsx";
 import type {render_settings} from "@/components/app.tsx";
+
+interface Shaders {
+    computeShader: string;
+    vertexShader: string;
+    fragmentShader: string;
+}
 
 interface WebGPUCanvasProps {
     rendererRef?: React.RefObject<IRenderer | null>;
@@ -12,7 +18,52 @@ interface WebGPUCanvasProps {
     shaderType?: 'canvas' | 'particle';
     fragmentShader?: string;
     computeConfig?: ComputeConfig | null;
-    renderSettings: render_settings
+    renderSettings: render_settings;
+}
+
+function createRenderer(
+    canvas: HTMLCanvasElement,
+    shaders: Shaders,
+    renderSettings: render_settings,
+    shaderType: 'canvas' | 'particle',
+    computeConfig: ComputeConfig | null,
+    size: { width: number; height: number },
+): IRenderer | null {
+    if (shaderType === 'particle') {
+        if (!computeConfig) {
+            console.error('Particle renderer requires a compute config');
+            return null;
+        }
+        return new ParticleRenderer(canvas, shaders, renderSettings, computeConfig, size);
+    }
+    return new CanvasRenderer(canvas, shaders, renderSettings, size);
+}
+
+function useCanvasResize(
+    canvasRef: React.RefObject<HTMLCanvasElement | null>,
+    onResize: (width: number, height: number) => void,
+) {
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) {
+            return;
+        }
+
+        const observer = new ResizeObserver((entries) => {
+            const dpr = window.devicePixelRatio || 1;
+            for (const entry of entries) {
+                const {width, height} = entry.contentRect;
+                const pw = Math.round(width * dpr);
+                const ph = Math.round(height * dpr);
+                canvas.width = pw;
+                canvas.height = ph;
+                onResize(pw, ph);
+            }
+        });
+
+        observer.observe(canvas);
+        return () => observer.disconnect();
+    }, [canvasRef, onResize]);
 }
 
 export const WebGPUCanvas: React.FC<WebGPUCanvasProps> = ({
@@ -20,84 +71,62 @@ export const WebGPUCanvas: React.FC<WebGPUCanvasProps> = ({
                                                               computeShader = '',
                                                               vertexShader = '',
                                                               fragmentShader = '',
-                                                              shaderType = null,
+                                                              shaderType = 'canvas',
                                                               computeConfig = null,
-                                                              renderSettings = null,
+                                                              renderSettings,
                                                           }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const initializedRef = useRef(false);
 
-    // Initialize WebGPU once when component mounts
+
+
+
     useEffect(() => {
-        if (!canvasRef.current || !rendererRef || rendererRef.current) {
+        const canvas = canvasRef.current;
+        if (!canvas || !rendererRef || initializedRef.current) {
             return;
         }
 
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
         const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
 
+        const shaders: Shaders = {computeShader, vertexShader, fragmentShader};
+        const size = {width: canvas.width, height: canvas.height};
 
-        let renderer: IRenderer | undefined;
-        if (renderSettings) {
-            switch (shaderType) {
-                case 'canvas':
-                    renderer = new CanvasRenderer(canvas, {
-                        computeShader: computeShader,
-                        vertexShader: vertexShader,
-                        fragmentShader: fragmentShader
-                    }, renderSettings, {width: canvas.width, height: canvas.height});
-                    break;
-                case 'particle':
-                    if (computeConfig && renderSettings) {
-                        renderer = new ParticleRenderer(canvas, {
-                            computeShader: computeShader,
-                            vertexShader: vertexShader,
-                            fragmentShader: fragmentShader,
-                        }, renderSettings, computeConfig, {width: canvas.width, height: canvas.height});
-                    }
-                    break;
-                default:
-                    renderer = new CanvasRenderer(canvas, {
-                        computeShader: computeShader,
-                        vertexShader: vertexShader,
-                        fragmentShader: fragmentShader
-                    }, renderSettings, {width: canvas.width, height: canvas.height});
-            }
-        }
-        if (renderer === undefined) {
-            console.error('Failed to create renderer: Invalid shader type or missing compute config');
+        const renderer = createRenderer(canvas, shaders, renderSettings, shaderType, computeConfig, size);
+        if (!renderer) {
             return;
         }
 
         rendererRef.current = renderer;
-        renderer.start().catch(err => {
+        initializedRef.current = true;
+
+        renderer.start().catch((err) => {
             console.error('Failed to start WebGPU renderer:', err);
         });
 
-        const observer = new ResizeObserver(entries => {
-            for (const entry of entries) {
-                const {width, height} = entry.contentRect;
-                const pixelWidth = Math.round(width * dpr);
-                const pixelHeight = Math.round(height * dpr);
-                canvas.width = pixelWidth;
-                canvas.height = pixelHeight;
-                renderer.resize(pixelWidth, pixelHeight);
-            }
-        });
-        observer.observe(canvas);
-
         return () => {
-            observer.disconnect();
             renderer.destroy();
+            rendererRef.current = null;
+            initializedRef.current = false;
         };
+
     }, []);
 
+    const handleResize = useCallback((width: number, height: number) => {
+        rendererRef?.current?.resize(width, height);
+    }, [rendererRef]);
+
+    useCanvasResize(canvasRef, handleResize);
+
     return (
-        <canvas className={'rounded-md w-full h-full'}
-                ref={canvasRef}
-                id="canvas-main"
+        <canvas
+            className="rounded-md w-full h-full"
+            ref={canvasRef}
+            id="canvas-main"
+  
         />
     );
-}
+};
