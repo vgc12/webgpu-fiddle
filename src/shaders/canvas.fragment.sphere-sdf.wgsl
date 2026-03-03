@@ -1,3 +1,16 @@
+// Available variables in your main() function:
+// color: vec4<f32> - Input color from vertex shader
+// fragCoord: vec4<f32> - Fragment coordinates
+// Return: vec4<f32> - Output color for this fragment
+
+
+// Available uniform variables in your shader:
+// resolution: vec2<f32> - The resolution of the output (width, height)
+// mousePosition: vec2<f32> - The position of the mouse (width, height)
+// aspectRatio: f32 - The aspect ratio of the output (width / height)
+// time: f32 - The elapsed time in seconds since the start of the program
+
+
 fn rot2D(angle: f32) -> mat2x2<f32> {
     let s = sin(angle);
     let c = cos(angle);
@@ -55,20 +68,20 @@ fn GetMinSceneDistanceFromPoint(p: vec3f) -> f32 {
 fn calcShading(p : vec3f) -> f32
 {
     // light source
-    let light_position = vec3f(-5.0, 5.0, 2.0);
+    let light_position = vec3f(10, 5.0, 0);
     
     // light direction
     let light_dir = normalize(light_position - p);
     
     // calculate hitpoint normal (gradient of sdf at p)
     let dist = GetMinSceneDistanceFromPoint(p);
-    let epsilon = vec2f(0.01, 0);
+    let epsilon = vec2f(0.01,0);
     let normal = normalize(dist - vec3(GetMinSceneDistanceFromPoint(p - epsilon.xyy), 
                                         GetMinSceneDistanceFromPoint(p - epsilon.yxy), 
                                         GetMinSceneDistanceFromPoint(p - epsilon.yyx)));
     
     // calculate diffuse contribution
-    return clamp(dot(normal, light_dir), 0.0, 1.0);
+    return clamp(dot(normal, light_dir) , 0.0, 1.0);
 }
 
 
@@ -77,22 +90,18 @@ fn map(p: vec3f) -> f32 {
     var ground = p.y+.75;
     var d = 1e10;
   
-    var pos =vec3(-10.,0,25.);
-    var cone = sdCone(p-pos, vec3(0,-1,0), vec3(0,10,0),20., 3. );
-    d = smin(d,cone,5.);
+    var pos =vec3(0.,0,-1);
     
-    d = smin(ground, d,5.);
+   // var cone = sdCone(p-pos, vec3(0,-1,0), vec3(0,10,0),20., 3. );
+    //d = smin(d,cone,5.);
+    d = GetMinSceneDistanceFromPoint(p-pos);
+    //d = smin(ground, d,5.);
     return d;
 
 }
 
 
 
-fn norm(p : vec3f) -> vec3f{
-    var m2 : vec3f = vec3f(0.01);
-    let k : mat3x3<f32> = mat3x3<f32>(p,p,p) - mat3x3<f32>(m2,m2,m2);
-    return normalize(map(p)-vec3f(map(k[0]),map(k[1]), map(k[2])));
-}
 
 @fragment
 fn fragmentMain(
@@ -134,11 +143,15 @@ fn fragmentMain(
             break;
         }
     }
-    let c : f32 =(t*.02 + f32(i)*.005);
-    col = vec3f(c,c,c);
-
   
-    var light : f32 = calcShading(p);
-    return sqrt(vec4f(select(vec3f(light), vec3f(0), hit),0));
+    col = vec3f(1,0,0);
+
+    if (t < 100.)
+    {
+           var light : f32 = calcShading(p);
+           return vec4f(vec3f(light*col),1.);
+    }
+    return vec4f(uv.xy, 1.0, 1.0);
+
   
 }
