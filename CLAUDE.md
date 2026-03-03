@@ -42,7 +42,7 @@ The renderer uses **Template Method + Strategy** patterns:
 - `shader-builder.tsx` provides: `injectUniformsIntoShader()` (adds uniform struct + local variable assignments into
   entry point functions), `getWorkgroupSize()`, `getStructFromBufferBinding()`, WGSL struct parsing with
   alignment/offset calculation
-- `ShaderConfig` type (`shader_config.tsx`): `{ vertexShader, fragmentShader, computeShader? }`
+- `ShaderConfig` type (`shader-config.tsx`): `{ vertexShader, fragmentShader, computeShader? }`
 - `type-info.tsx` maps WGSL types to their byte sizes and alignments
 
 ### Buffer Management

@@ -43,6 +43,35 @@ fn sdCone(p: vec3f, a: vec3f, b: vec3f, ra: f32, rb: f32) -> f32 {
                         cbx * cbx + cby * cby * baba));
 }
 
+
+fn GetMinSceneDistanceFromPoint(p: vec3f) -> f32 {
+    //define sphere here for now vec4(position.xyz, radius)
+    let sphere : vec4f = vec4f(0.0, 1.0, 6.0, 1.0);
+    
+    // get distance from point to sphere
+    return length(p - sphere.xyz) - sphere.w;
+}
+
+fn calcShading(p : vec3f) -> f32
+{
+    // light source
+    let light_position = vec3f(-5.0, 5.0, 2.0);
+    
+    // light direction
+    let light_dir = normalize(light_position - p);
+    
+    // calculate hitpoint normal (gradient of sdf at p)
+    let dist = GetMinSceneDistanceFromPoint(p);
+    let epsilon = vec2f(0.01, 0);
+    let normal = normalize(dist - vec3(GetMinSceneDistanceFromPoint(p - epsilon.xyy), 
+                                        GetMinSceneDistanceFromPoint(p - epsilon.yxy), 
+                                        GetMinSceneDistanceFromPoint(p - epsilon.yyx)));
+    
+    // calculate diffuse contribution
+    return clamp(dot(normal, light_dir), 0.0, 1.0);
+}
+
+
 fn map(p: vec3f) -> f32 {
    
     var ground = p.y+.75;
@@ -108,10 +137,8 @@ fn fragmentMain(
     let c : f32 =(t*.02 + f32(i)*.005);
     col = vec3f(c,c,c);
 
-    var n : vec3f = norm(p);
-    var light : vec3f = normalize(vec3f(0,6, 6));
-    var brightness = dot(light,n);
-    brightness += dot(max(n,vec3f(0.)),vec3f( .4));
-    return sqrt(vec4f(select(vec3f(brightness), vec3f(0), hit),0));
+  
+    var light : f32 = calcShading(p);
+    return sqrt(vec4f(select(vec3f(light), vec3f(0), hit),0));
   
 }

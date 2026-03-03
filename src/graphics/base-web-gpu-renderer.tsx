@@ -2,8 +2,9 @@
 import {AnimationController} from "@/graphics/animation-controller.tsx";
 import {GPUResourceManager} from "@/graphics/gpu-resource-manager.tsx";
 import type {IRenderer} from "@/graphics/i-renderer.tsx";
-import type {ShaderConfig} from "@/graphics/shader_config.tsx";
 import {Time} from "@/utils/time.ts";
+import type {ShaderConfig} from "@/graphics/shader-config.tsx";
+
 
 /**
  * Base WebGPU Renderer using Template Method Pattern
@@ -26,7 +27,7 @@ export abstract class BaseWebGPURenderer implements IRenderer {
         this.animationController = new AnimationController();
     }
 
-    get device(): GPUDevice | null {
+    get Device(): GPUDevice | null {
         try {
             return this.gpuContext.Device;
         }

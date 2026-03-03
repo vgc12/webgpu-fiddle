@@ -100,7 +100,7 @@ export const Panel: React.FC<PanelProps> = ({
                     {label}
                 </h3>
             )}
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-hidden">
                 {children}
             </div>
             {resizable && (

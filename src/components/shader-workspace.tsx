@@ -1,4 +1,4 @@
-﻿import type {ShaderConfig} from "@/graphics/shader_config.tsx";
+﻿import type {ShaderConfig} from "@/graphics/shader-config.tsx";
 import {
     CanvasShaderConfig,
     getStructFromBufferBinding,
@@ -43,7 +43,7 @@ export function ShaderWorkspace({shaderType, renderSettings, onChangeRenderSetti
 
     // Debounced live validation — validates the active tab's shader as the user types
     useEffect(() => {
-        const device = rendererRef.current?.device;
+        const device = rendererRef.current?.Device;
         if (!device) {
             return;
         }
@@ -87,7 +87,7 @@ export function ShaderWorkspace({shaderType, renderSettings, onChangeRenderSetti
         const newFragmentShader = injectUniformsIntoShader(userShaders.fragment);
         const newComputeShader = injectUniformsIntoShader(userShaders.compute);
 
-        const device = rendererRef.current?.device;
+        const device = rendererRef.current?.Device;
         if (!device) {
             return;
         }
@@ -158,8 +158,8 @@ export function ShaderWorkspace({shaderType, renderSettings, onChangeRenderSetti
 
             <Panel grow={true} resizeDirection={"horizontal"} resizable={true} className={"h-[90vh] mx-3"}>
                 <div className="flex gap-2 mb-2">
-                    <ButtonLightRectangle value={'Compile & Apply Shaders'}
-                                          onClick={handleCompileAndApply}/>
+                    <ButtonLightRectangle
+                        onClick={handleCompileAndApply}>Compile & Apply Shaders</ButtonLightRectangle>
                     <ButtonLightRectangle onClick={onChangeShaderType}>Change Shader Type</ButtonLightRectangle>
                     <ButtonLightRectangle onClick={onChangeRenderSettings}>Render Settings</ButtonLightRectangle>
                 </div>
@@ -172,7 +172,7 @@ export function ShaderWorkspace({shaderType, renderSettings, onChangeRenderSetti
                     tabs={getTabs()}
                     activeTabId={activeTab}
                     onTabChange={setActiveTab as (s: string) => void}
-                    className="h-full"
+                    className="grow"
                 />
             </Panel>
         </div>

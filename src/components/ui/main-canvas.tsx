@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef} from 'react';
 import type {IRenderer} from "@/graphics/i-renderer.tsx";
 import {CanvasRenderer} from "@/graphics/canvas-renderer.tsx";
 import {ParticleRenderer} from "@/graphics/particle-renderer.tsx";

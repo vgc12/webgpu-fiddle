@@ -2,7 +2,7 @@
 import {UniformBuffer} from "@/graphics/input-output-buffers.tsx";
 import type {GPUResourceManager} from "@/graphics/gpu-resource-manager.tsx";
 import {createCanvasRenderBindGroup, createCanvasRenderLayout} from "@/graphics/canvas-bind-group-functions.tsx";
-import type {ShaderConfig} from "@/graphics/shader_config.tsx";
+import type {ShaderConfig} from "@/graphics/shader-config.tsx";
 import {RenderPipelineBuilder} from "@/graphics/render-pipeline-builder.tsx";
 
 export class CanvasResourceStrategy implements IResourceStrategy {
@@ -35,14 +35,14 @@ export class CanvasResourceStrategy implements IResourceStrategy {
     }
 
 
-    getBindGroups(): { compute: GPUBindGroup[], render: GPUBindGroup[] } {
+    get BindGroups(): { compute: GPUBindGroup[], render: GPUBindGroup[] } {
         return {
             compute: [],
             render: [this.renderBindGroup]
         };
     }
 
-    getUniformBuffer(): UniformBuffer {
+    get UniformBuffer(): UniformBuffer {
         return this.uniformBuffer;
     }
 

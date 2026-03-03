@@ -2,6 +2,7 @@
  * Strategy interfaces for different aspects of rendering
  * These allow different renderers to compose their behavior from reusable strategies
  */
+import type {UniformBuffer} from "@/graphics/input-output-buffers.tsx";
 
 export interface IPipelineStrategy {
     createPipelines(
@@ -20,8 +21,10 @@ export interface IResourceStrategy {
     ): void;
 
     cleanup(): void;
-
-    getBindGroups(): { compute?: GPUBindGroup[]; render: GPUBindGroup[] };
+    
+    get BindGroups(): { compute?: GPUBindGroup[]; render: GPUBindGroup[] };
+    
+    get UniformBuffer(): UniformBuffer;
 }
 
 export interface IUpdateStrategy {

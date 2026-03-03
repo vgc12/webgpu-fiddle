@@ -5,7 +5,7 @@ import {
     ParticleRenderStrategy,
     ParticleResourceStrategy
 } from "@/graphics/particle-strategies.tsx";
-import type {ShaderConfig} from "@/graphics/shader_config.tsx";
+import type {ShaderConfig} from "@/graphics/shader-config.tsx";
 import type {ComputeConfig} from "@/graphics/compute-config.tsx";
 import type {render_settings} from "@/components/app.tsx";
 
@@ -72,11 +72,13 @@ export class ParticleRenderer extends StrategyBasedRenderer {
         const uniformData = new Float32Array([
             this.resolution.width,
             this.resolution.height,
+            this.mousePosition.x,
+            this.mousePosition.y,
             this.resolution.width / this.resolution.height,
             this.time.TotalTime
         ]);
 
-        this.particleResourceStrategy.getUniformBuffer().writeBuffer(uniformData);
+        this.particleResourceStrategy.UniformBuffer.writeBuffer(uniformData);
     }
 
     protected getStrategyContext(): any {

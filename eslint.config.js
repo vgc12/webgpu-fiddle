@@ -35,6 +35,10 @@ export default tseslint.config(
                     format: ['camelCase'],
                 },
                 {
+                    selector: "accessor",
+                    format: ["PascalCase"],
+                },
+                {
                     selector: 'variable',
                     format: ['camelCase', 'UPPER_CASE'],
                 },

@@ -12,8 +12,9 @@ function generateUniformDocumentation() {
     const lines: string[] = [
         '\n\n// Available uniform variables in your shader:',
         '// resolution: vec2<f32> - The resolution of the output (width, height)',
+        '// mousePosition: vec2<f32> - The position of the mouse (width, height)',
         '// aspectRatio: f32 - The aspect ratio of the output (width / height)',
-        '// time: f32 - The elapsed time in seconds since the start of the program',
+        '// time: f32 - The elapsed time in seconds since the start of the program'
     ];
     return lines.join('\n');
 }

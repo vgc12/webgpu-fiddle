@@ -82,8 +82,8 @@ export function MonacoEditor({
                 theme: 'vs-dark',
                 lineNumbers: "on",
                 automaticLayout: true,
-                minimap: {enabled: true},
                 scrollBeyondLastLine: false,
+                padding : { bottom: 14*20},
                 fontSize: 14,
                 tabSize: 4,
                 bracketPairColorization: {enabled: true},
@@ -173,14 +173,12 @@ export function MonacoEditor({
 
     return (
         <div className={cn('flex flex-col h-full', className)}>
-            <div className="flex gap-1 bg-gray-900 border-b border-gray-700 px-2 pt-2">
+            <div className="flex gap-1 bg-gray-900 border-b border-gray-700 px-2 ">
                 {tabs.map(tab => (
                     <ButtonLightRectangle
                         key={tab.id}
                         onClick={() => onTabChange?.(tab.id)}
-                        className={cn(
-                        )}
-                    >
+                        className={cn()}>
                         {tab.label}
                     </ButtonLightRectangle>
                 ))}

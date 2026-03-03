@@ -1,6 +1,6 @@
 ﻿import {InputOutputBuffers, UniformBuffer} from "@/graphics/input-output-buffers.tsx";
 import type {ComputeConfig} from "@/graphics/compute-config.tsx";
-import type {ShaderConfig} from "@/graphics/shader_config.tsx";
+import type {ShaderConfig} from "@/graphics/shader-config.tsx";
 import type {IPipelineStrategy, IRenderStrategy, IResourceStrategy, IUpdateStrategy} from "./rendering-strategies";
 import {calculateWorkgroupCount} from "./workgroup-utils";
 import type {GPUResourceManager} from "@/graphics/gpu-resource-manager.tsx";
@@ -28,8 +28,8 @@ export class ParticlePipelineStrategy implements IPipelineStrategy {
         }
     ): Promise<{ compute: GPUComputePipeline; render: GPURenderPipeline }> {
         // Create shader modules
-
     
+        
         const computeShaderModule = resourceManager.createShaderModule(
             shaderConfig.computeShader,
             'Particle Update Shader'
@@ -128,14 +128,15 @@ export class ParticleResourceStrategy implements IResourceStrategy {
                 particleBuffer: this.inOutBuffer,
             }, createParticleRenderLayout(device)
         );
-
+        
+        
     }
 
     cleanup(): void {
         this.inOutBuffer?.destroy();
     }
 
-    getBindGroups(): { compute: GPUBindGroup[], render: GPUBindGroup[] } {
+    get BindGroups(): { compute: GPUBindGroup[], render: GPUBindGroup[] } {
         return {
             compute: [this.computeBindGroupA, this.computeBindGroupB],
             render: [this.renderBindGroup]
@@ -146,7 +147,7 @@ export class ParticleResourceStrategy implements IResourceStrategy {
         return this.inOutBuffer;
     }
 
-    getUniformBuffer(): UniformBuffer {
+    get UniformBuffer(): UniformBuffer {
         return this.uniformBuffer;
     }
 
@@ -194,7 +195,7 @@ export class ParticleComputeUpdateStrategy implements IUpdateStrategy {
     update(encoder: GPUCommandEncoder, pipeline: GPUComputePipeline): void {
 
         if (!this.pingPong) {
-            const bindGroups = this.resourceStrategy.getBindGroups().compute;
+            const bindGroups = this.resourceStrategy.BindGroups.compute;
 
             this.pingPong = new PingPongBindGroups(bindGroups as [GPUBindGroup, GPUBindGroup]);
         }

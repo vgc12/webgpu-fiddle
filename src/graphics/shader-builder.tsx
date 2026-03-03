@@ -6,11 +6,12 @@ import defaultCanvasVertexShader from '@/shaders/canvas.vertex.blank.wgsl';
 import defaultCanvasFragmentShader from '@/shaders/canvas.fragment.sphere-sdf.wgsl';
 
 import uniformStruct from '@/shaders/uniforms.wgsl';
-import type {ShaderConfig} from "@/graphics/shader_config.tsx";
+import type {ShaderConfig} from "@/graphics/shader-config.tsx";
 
-export const CanvasShaderConfig: ShaderConfig = {
+export const CanvasShaderConfig : ShaderConfig = {
     vertexShader: defaultCanvasVertexShader,
-    fragmentShader: defaultCanvasFragmentShader
+    fragmentShader: defaultCanvasFragmentShader,
+    computeShader: ''
 };
 
 export const ParticleShaderConfig: ShaderConfig = {

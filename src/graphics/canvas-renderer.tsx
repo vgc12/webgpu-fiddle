@@ -1,7 +1,7 @@
 ﻿// Draws a rectangle that covers the whole screen
 import {StrategyBasedRenderer} from "@/graphics/strategy-based-renderer.tsx";
 import {NullUpdateStrategy} from "@/graphics/particle-strategies.tsx";
-import type {ShaderConfig} from "@/graphics/shader_config.tsx";
+import type {ShaderConfig} from "@/graphics/shader-config.tsx";
 import {CanvasPipelineStrategy, CanvasRenderStrategy, CanvasResourceStrategy} from "@/graphics/canvas-strategies.tsx";
 import type {render_settings} from "@/components/app.tsx";
 
@@ -52,11 +52,13 @@ export class CanvasRenderer extends StrategyBasedRenderer {
         const uniformData = new Float32Array([
             this.resolution.width,
             this.resolution.height,
+            this.mousePosition.x,
+            this.mousePosition.y,
             this.resolution.width / this.resolution.height,
             this.time.TotalTime
         ]);
 
-        this.canvasResourceStrategy.getUniformBuffer().writeBuffer(uniformData);
+        this.canvasResourceStrategy.UniformBuffer.writeBuffer(uniformData);
     }
 
     protected getStrategyContext(): any {

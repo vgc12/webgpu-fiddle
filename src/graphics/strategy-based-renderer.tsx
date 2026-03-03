@@ -1,4 +1,4 @@
-﻿import type {ShaderConfig} from "@/graphics/shader_config.tsx";
+﻿import type {ShaderConfig} from "@/graphics/shader-config.tsx";
 import type {IPipelineStrategy, IRenderStrategy, IResourceStrategy, IUpdateStrategy} from "./rendering-strategies";
 import {BaseWebGPURenderer} from "@/graphics/base-web-gpu-renderer.tsx";
 import type {render_settings} from "@/components/app.tsx";
@@ -12,7 +12,7 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
     protected pipelines: { compute?: GPUComputePipeline; render: GPURenderPipeline };
     protected mousePosition = { x: 0, y: 0 };
     
-    handleMouseMove = (e) => {
+    handleMouseMove = (e: { clientX: number; clientY: number; }) => {
        
         if (!this.canvas) {
             return;
@@ -21,6 +21,7 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         this.mousePosition = { x, y };
+        
     };
 
 
@@ -80,7 +81,7 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
         const encoder = device.createCommandEncoder();
 
         // Execute update strategy (e.g., compute pass)
-        const bindGroups = this.resourceStrategy.getBindGroups();
+        const bindGroups = this.resourceStrategy.BindGroups;
         if (this.pipelines.compute && bindGroups.compute) {
             this.updateStrategy.update(encoder, this.pipelines.compute, bindGroups.compute);
         }
@@ -104,9 +105,17 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
      * Hook for updating uniforms - can be overridden by subclasses
      */
     protected updateUniforms(): void {
-        // Default implementation - override in subclasses if needed
-    }
+        const uniformData = new Float32Array([
+            this.resolution.width,
+            this.resolution.height,
+            this.mousePosition.x,
+            this.mousePosition.y,
+            this.resolution.width / this.resolution.height,
+            this.time.TotalTime
+        ]);
 
+        this.resourceStrategy.UniformBuffer.writeBuffer(uniformData);
+    }
     /**
      * Provides context for strategy initialization
      * Override this method to provide strategy-specific context

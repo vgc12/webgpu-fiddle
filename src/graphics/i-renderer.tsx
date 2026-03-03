@@ -1,7 +1,7 @@
-import type {ShaderConfig} from "@/graphics/shader_config.tsx";
+import type {ShaderConfig} from "@/graphics/shader-config.tsx";
 
 export interface IRenderer {
-    readonly device: GPUDevice | null;
+    readonly Device: GPUDevice | null;
 
     start(): Promise<void>;
 
