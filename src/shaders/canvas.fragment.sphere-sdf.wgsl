@@ -1,16 +1,3 @@
-// Available variables in your main() function:
-// color: vec4<f32> - Input color from vertex shader
-// fragCoord: vec4<f32> - Fragment coordinates
-// Return: vec4<f32> - Output color for this fragment
-
-
-// Available uniform variables in your shader:
-// resolution: vec2<f32> - The resolution of the output (width, height)
-// mousePosition: vec2<f32> - The position of the mouse (width, height)
-// aspectRatio: f32 - The aspect ratio of the output (width / height)
-// time: f32 - The elapsed time in seconds since the start of the program
-
-
 fn rot2D(angle: f32) -> mat2x2<f32> {
     let s = sin(angle);
     let c = cos(angle);
@@ -32,7 +19,10 @@ fn sdCapsule(p: vec3f, a: vec3f, b: vec3f, r: f32) -> f32 {
     let h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
     return length(pa - ba * h) - r;
 }
-
+fn sdfSphere(p:vec3f, radius:f32) -> f32
+{
+    return length( p ) - radius;
+}
 fn sdCone(p: vec3f, a: vec3f, b: vec3f, ra: f32, rb: f32) -> f32 {
     let rba = rb - ra;
     let baba = dot(b - a, b - a);
@@ -56,49 +46,34 @@ fn sdCone(p: vec3f, a: vec3f, b: vec3f, ra: f32, rb: f32) -> f32 {
                         cbx * cbx + cby * cby * baba));
 }
 
-
-fn GetMinSceneDistanceFromPoint(p: vec3f) -> f32 {
-    //define sphere here for now vec4(position.xyz, radius)
-    let sphere : vec4f = vec4f(0.0, 1.0, 6.0, 1.0);
-    
-    // get distance from point to sphere
-    return length(p - sphere.xyz) - sphere.w;
+fn sdfBox(p: vec3f, b: vec3f) -> f32 {
+    let q = abs(p) - b;
+    return length(max(q, vec3f(0.0))) + min(max(q.x, max(q.y, q.z)), 0.0);
 }
 
-fn calcShading(p : vec3f) -> f32
-{
-    // light source
-    let light_position = vec3f(10, 5.0, 0);
-    
-    // light direction
+fn scene(p: vec3f) -> f32 {
+   // let capsule = sdCapsule(p, vec3f(0, -1, 0), vec3f(0, 1, 0), 0.5);
+    let cube = sdfBox(p - vec3f(0, 0, 5), vec3f(0.5));
+    return cube;
+}
+
+fn getNormal(p: vec3f) -> vec3f {
+    let e = vec2f(0.01, 0.0);
+    return normalize(vec3f(
+        scene(p + e.xyy) - scene(p - e.xyy),
+        scene(p + e.yxy) - scene(p - e.yxy),
+        scene(p + e.yyx) - scene(p - e.yyx)
+    ));
+}
+
+fn calcShading(p: vec3f) -> f32 {
+    let light_position = vec3f(10.0, 5.0, 0.0);
     let light_dir = normalize(light_position - p);
-    
-    // calculate hitpoint normal (gradient of sdf at p)
-    let dist = GetMinSceneDistanceFromPoint(p);
-    let epsilon = vec2f(0.01,0);
-    let normal = normalize(dist - vec3(GetMinSceneDistanceFromPoint(p - epsilon.xyy), 
-                                        GetMinSceneDistanceFromPoint(p - epsilon.yxy), 
-                                        GetMinSceneDistanceFromPoint(p - epsilon.yyx)));
-    
-    // calculate diffuse contribution
-    return clamp(dot(normal, light_dir) , 0.0, 1.0);
+    let normal = getNormal(p);
+    return clamp(dot(normal, light_dir), 0.0, 1.0);
 }
 
 
-fn map(p: vec3f) -> f32 {
-   
-    var ground = p.y+.75;
-    var d = 1e10;
-  
-    var pos =vec3(0.,0,-1);
-    
-   // var cone = sdCone(p-pos, vec3(0,-1,0), vec3(0,10,0),20., 3. );
-    //d = smin(d,cone,5.);
-    d = GetMinSceneDistanceFromPoint(p-pos);
-    //d = smin(ground, d,5.);
-    return d;
-
-}
 
 
 
@@ -109,12 +84,19 @@ fn fragmentMain(
 ) -> @location(0) vec4<f32> {
 
     var uv: vec2f = (vec2f(fragCoord.x, resolution.y - fragCoord.y) * 2.0 - resolution.xy) / resolution.y;
-   // var m : vec2f = (iMouse.xy * 2. - iResolution.xy)/iResolution.y;
+    var m : vec2f = (mousePosition * 2. - resolution.xy)/resolution.y;
 
     let fov : f32 = 1.5;
     var ro : vec3f = vec3f(0);
     var rd : vec3f = normalize(vec3f(uv*fov,1.));
-
+    
+    let r = rot2D(-m.y);
+    ro = vec3f(ro.x, r * ro.yz);
+    rd = vec3f(rd.x, r * rd.yz);
+    
+    let r2 = rot2D(m.x);
+    ro = vec3f(r2 * ro.xz, ro.y).xzy;
+    rd = vec3f(r2 * rd.xz, rd.y).xzy;
 /*
     ro.yz *= rot2D(-m.y);
     rd.yz *= rot2D(-m.y);
@@ -132,7 +114,7 @@ fn fragmentMain(
     for(i = 0; i < 80; i++){
         p = ro + rd * t;
 
-        let d : f32 = map(p);
+        let d : f32 = scene(p);
 
         t += d;
 
@@ -151,7 +133,7 @@ fn fragmentMain(
            var light : f32 = calcShading(p);
            return vec4f(vec3f(light*col),1.);
     }
-    return vec4f(uv.xy, 1.0, 1.0);
+    return vec4f(.5 + .5 * cos(time * vec3f(.2,.3,.5)), 1.0);
 
   
 }

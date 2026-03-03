@@ -19,7 +19,7 @@ function generateUniformDocumentation() {
     return lines.join('\n');
 }
 
-export function generateVariableDocumentation(shaderType: 'compute' | 'vertex' | 'fragment'): string {
+export function generateVariableDocumentation(shaderType: 'compute' | 'vertex' | 'fragment', renderType: 'canvas' | 'particle'): string {
     const lines: string[] = ['// Available variables in your main() function:'];
 
     if (shaderType === 'compute') {
@@ -28,10 +28,14 @@ export function generateVariableDocumentation(shaderType: 'compute' | 'vertex' |
         lines.push('// workgroup_id: vec3<u32> - Which workgroup this invocation is in');
     } else if (shaderType === 'vertex') {
         lines.push('// vertexIndex: u32 - Index of the current vertex');
-        lines.push('// particlePos: vec2<f32> - Position of the particle');
-        lines.push('// particleVel: vec2<f32> - Velocity of the particle');
+        lines.push('// instanceIndex: u32 - Index of the current vertex');
+        if(renderType === 'particle') {
+            lines.push('// particlePos: vec2<f32> - Position of the particle');
+            lines.push('// particleVel: vec2<f32> - Velocity of the particle');
+        }
         lines.push('// output: VertexOutput - Set output.position and output.color');
-    } else if (shaderType === 'fragment') {
+    }
+    else if (shaderType === 'fragment') {
         lines.push('// color: vec4<f32> - Input color from vertex shader');
         lines.push('// fragCoord: vec4<f32> - Fragment coordinates');
         lines.push('// Return: vec4<f32> - Output color for this fragment');

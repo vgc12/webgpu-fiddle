@@ -10,7 +10,7 @@ import type {render_settings} from "@/components/app.tsx";
  */
 export class StrategyBasedRenderer extends BaseWebGPURenderer {
     protected pipelines: { compute?: GPUComputePipeline; render: GPURenderPipeline };
-    protected mousePosition = { x: 0, y: 0 };
+    protected mousePosition = { x: 1, y: 1 };
     
     handleMouseMove = (e: { clientX: number; clientY: number; }) => {
        

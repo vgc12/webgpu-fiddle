@@ -1,10 +1,7 @@
-const squareArray: array<vec2f, 6> = array<vec2f, 6>(
-    vec2f(-1, -1),
-    vec2f(-1,  1),
-    vec2f( 1, -1),
-    vec2f( 1, -1),
-    vec2f(-1,  1),
-    vec2f( 1,  1)
+const triangleVertices: array<vec2f, 3> = array<vec2f, 3>(
+    vec2f(-5, -5),
+    vec2f(0,  5),
+    vec2f(5, -5),
 );
 
 struct VertexOutput {
@@ -18,7 +15,7 @@ fn vertexMain(
 ) -> VertexOutput {
 
     var output: VertexOutput;
-    let v = squareArray[vertexIndex];
+    let v = triangleVertices[vertexIndex];
     output.position = vec4<f32>(
         v.x,
         v.y,

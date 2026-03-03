@@ -62,7 +62,7 @@ function RenderSettings({
                         }: {
     onConfirm: (settings: render_settings) => void;
 }) {
-    const [vertexDrawCount, setVertexDrawCount] = useState(6);
+    const [vertexDrawCount, setVertexDrawCount] = useState(3);
     const [particleCount, setInstanceCount] = useState(1);
 
     return (
@@ -100,7 +100,7 @@ function RenderSettings({
 function App() {
     useDarkMode();
 
-    const [shaderType, setShaderType] = useState<'canvas' | 'particle' | null>(null);
+    const [rendererType, setRendererType] = useState<'canvas' | 'particle' | null>(null);
     const [renderSettings, setRenderSettings] = useState<render_settings>({
         vertexDrawCount: 6,
         instanceCount: 1,
@@ -108,9 +108,9 @@ function App() {
     const [shaderSelectorOpen, setShaderSelectorOpen] = useState<boolean>(false);
     const [renderSettingsOpen, setRenderSettingsOpen] = useState<boolean>(false);
 
-    if (shaderType === null || shaderSelectorOpen) {
+    if (rendererType === null || shaderSelectorOpen) {
         return <ShaderSelector onConfirm={(v) => {
-            setShaderType(v);
+            setRendererType(v);
             setRenderSettings(prev => ({...prev, instanceCount: v === 'particle' ? 2000 : 1}));
             setShaderSelectorOpen(false);
         }}/>;
@@ -127,8 +127,8 @@ function App() {
 
     return (
         <ShaderWorkspace
-            key={shaderType}
-            shaderType={shaderType}
+            key={rendererType}
+            shaderType={rendererType}
             renderSettings={renderSettings}
             onChangeShaderType={() => setShaderSelectorOpen(true)}
             onChangeRenderSettings={() => setRenderSettingsOpen(true)}

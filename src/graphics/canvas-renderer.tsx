@@ -57,7 +57,7 @@ export class CanvasRenderer extends StrategyBasedRenderer {
             this.resolution.width / this.resolution.height,
             this.time.TotalTime
         ]);
-
+        console.log(uniformData);
         this.canvasResourceStrategy.UniformBuffer.writeBuffer(uniformData);
     }
 

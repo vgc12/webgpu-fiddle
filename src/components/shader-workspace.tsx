@@ -24,7 +24,7 @@ export function ShaderWorkspace({shaderType, renderSettings, onChangeRenderSetti
     onChangeRenderSettings: () => void;
 }) {
     const shaderConfig: ShaderConfig = shaderType === 'canvas' ? CanvasShaderConfig : ParticleShaderConfig;
-    const initialShaders = buildInitialShaders(shaderConfig);
+    const initialShaders = buildInitialShaders(shaderConfig, shaderType);
 
     const [activeTab, setActiveTab] = useState<tab_id>('vertex');
     const activeTabRef = useRef(activeTab);
@@ -32,9 +32,9 @@ export function ShaderWorkspace({shaderType, renderSettings, onChangeRenderSetti
 
     const [userShaders, setUserShaders] = useState<Record<tab_id, string>>(initialShaders);
 
-    const [fullVertexShader, setFullVertexShader] = useState<string>(injectUniformsIntoShader(initialShaders.vertex));
-    const [fullFragmentShader, setFullFragmentShader] = useState<string>(injectUniformsIntoShader(initialShaders.fragment));
-    const [fullComputeShader, setFullComputeShader] = useState<string>(injectUniformsIntoShader(initialShaders.compute));
+    const [fullVertexShader, setFullVertexShader] = useState(injectUniformsIntoShader(initialShaders.vertex));
+    const [fullFragmentShader, setFullFragmentShader] = useState(injectUniformsIntoShader(initialShaders.fragment));
+    const [fullComputeShader, setFullComputeShader] = useState(injectUniformsIntoShader(initialShaders.compute));
 
     const rendererRef = useRef<IRenderer | null>(null);
 
@@ -43,7 +43,7 @@ export function ShaderWorkspace({shaderType, renderSettings, onChangeRenderSetti
 
     // Debounced live validation — validates the active tab's shader as the user types
     useEffect(() => {
-        const device = rendererRef.current?.Device;
+        const device = rendererRef.current?.device;
         if (!device) {
             return;
         }
@@ -56,7 +56,7 @@ export function ShaderWorkspace({shaderType, renderSettings, onChangeRenderSetti
                 return;
             }
             const fullCode = injectUniformsIntoShader(userCode);
-            const diags = await validateShader(device, userCode, fullCode, tab);
+            const diags = await validateShader(device, userCode, fullCode.code, tab, fullCode.prefixLineCount,fullCode.injections );
             setDiagnostics(prev => ({...prev, [tab]: diags}));
         }, 500);
 
@@ -77,8 +77,8 @@ export function ShaderWorkspace({shaderType, renderSettings, onChangeRenderSetti
     let options: ComputeConfig | undefined = undefined;
     if (userShaders.compute != '') {
         options = {
-            inOutBufferStruct: getStructFromBufferBinding(fullComputeShader, 'input'),
-            workgroupSize: getWorkgroupSize(fullComputeShader),
+            inOutBufferStruct: getStructFromBufferBinding(fullComputeShader.code, 'input'),
+            workgroupSize: getWorkgroupSize(fullComputeShader.code),
             particleCount: renderSettings.instanceCount,
         }
     }
@@ -87,17 +87,17 @@ export function ShaderWorkspace({shaderType, renderSettings, onChangeRenderSetti
         const newFragmentShader = injectUniformsIntoShader(userShaders.fragment);
         const newComputeShader = injectUniformsIntoShader(userShaders.compute);
 
-        const device = rendererRef.current?.Device;
+        const device = rendererRef.current?.device;
         if (!device) {
             return;
         }
 
         // Validate all shaders and collect diagnostics
         const [vertexDiags, fragmentDiags, computeDiags] = await Promise.all([
-            validateShader(device, userShaders.vertex, newVertexShader, 'vertex'),
-            validateShader(device, userShaders.fragment, newFragmentShader, 'fragment'),
+            validateShader(device, userShaders.vertex, newVertexShader.code, 'vertex', newVertexShader.prefixLineCount, newVertexShader.injections),
+            validateShader(device, userShaders.fragment, newFragmentShader.code, 'fragment', newVertexShader.prefixLineCount, newComputeShader.injections),
             userShaders.compute
-            ? validateShader(device, userShaders.compute, newComputeShader, 'compute')
+            ? validateShader(device, userShaders.compute, newComputeShader.code, 'compute', newComputeShader.prefixLineCount, newComputeShader.injections)
             : Promise.resolve([]),
         ]);
 
@@ -118,8 +118,8 @@ export function ShaderWorkspace({shaderType, renderSettings, onChangeRenderSetti
         let options: ComputeConfig | undefined = undefined;
         if (userShaders.compute != '') {
             options = {
-                inOutBufferStruct: getStructFromBufferBinding(newComputeShader, 'input'),
-                workgroupSize: getWorkgroupSize(newComputeShader),
+                inOutBufferStruct: getStructFromBufferBinding(newComputeShader.code, 'input'),
+                workgroupSize: getWorkgroupSize(newComputeShader.code),
                 particleCount: renderSettings.instanceCount,
             }
         }
@@ -131,9 +131,9 @@ export function ShaderWorkspace({shaderType, renderSettings, onChangeRenderSetti
         if (rendererRef.current) {
             try {
                 await rendererRef.current.recompileShaders({
-                    computeShader: newComputeShader,
-                    vertexShader: newVertexShader,
-                    fragmentShader: newFragmentShader,
+                    computeShader: newComputeShader.code,
+                    vertexShader: newVertexShader.code,
+                    fragmentShader: newFragmentShader.code,
                 }, options);
             }
             catch (error) {
@@ -151,9 +151,9 @@ export function ShaderWorkspace({shaderType, renderSettings, onChangeRenderSetti
             <Panel resizeDirection={"horizontal"} resizable={true} className={'w-[66vw] h-[90vh]'}>
                 <WebGPUCanvas rendererRef={rendererRef} computeConfig={options} renderSettings={renderSettings}
                               shaderType={shaderType}
-                              computeShader={fullComputeShader}
-                              fragmentShader={fullFragmentShader}
-                              vertexShader={fullVertexShader}></WebGPUCanvas>
+                              computeShader={fullComputeShader.code}
+                              fragmentShader={fullFragmentShader.code}
+                              vertexShader={fullVertexShader.code}></WebGPUCanvas>
             </Panel>
 
             <Panel grow={true} resizeDirection={"horizontal"} resizable={true} className={"h-[90vh] mx-3"}>

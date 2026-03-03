@@ -43,23 +43,32 @@ export function getWorkgroupSize(computeShader: string): [number, number, number
 }
 
 
-export function injectUniformsIntoShader(wgslCode: string): string {
-    wgslCode = uniformStruct + '\n' + wgslCode;
+export function injectUniformsIntoShader(wgslCode: string): { code: string; prefixLineCount: number; injections: { atLine: number; linesAdded: number }[] } {
+    const prefix = uniformStruct + '\n';
+    const prefixLineCount = prefix.split('\n').length - 1;
+
+    let result = prefix + wgslCode;
 
     const uniformDefs = `
     resolution = uniforms.resolution;
+    mousePosition = uniforms.mousePosition;
     aspectRatio = uniforms.aspectRatio;
     time = uniforms.time;`;
+    const defsLineCount = uniformDefs.split('\n').length - 1;
 
-    // Regex to find any function with @compute, @vertex, or @fragment attribute
-    // Captures the entire function declaration up to and including the opening brace
     const functionRegex = /(@(?:compute|vertex|fragment)[^\n]*\n\s*fn\s+\w+\s*\([^)]*\)[^{]*{)/g;
 
+    const injections: { atLine: number; linesAdded: number }[] = [];
+    let extraLines = 0;
 
-    return wgslCode.replace(functionRegex, (match) => {
-        // Insert uniform definitions right after the opening brace
+    result = result.replace(functionRegex, (match, _group, offset) => {
+        const lineNum = result.substring(0, offset + match.length).split('\n').length;
+        injections.push({ atLine: lineNum + extraLines, linesAdded: defsLineCount });
+        extraLines += defsLineCount;
         return match + uniformDefs;
     });
+
+    return { code: result, prefixLineCount, injections };
 }
 
 

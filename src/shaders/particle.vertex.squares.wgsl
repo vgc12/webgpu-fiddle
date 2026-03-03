@@ -1,11 +1,9 @@
-const squareArray: array<vec2f, 6> = array<vec2f, 6>(
-    vec2f(-0.1, -0.1),
-    vec2f(-0.1,  0.1),
-    vec2f( 0.1, -0.1),
-    vec2f( 0.1, -0.1),
-    vec2f(-0.1,  0.1),
-    vec2f( 0.1,  0.1)
+const squareArray: array<vec2f, 3> = array<vec2f, 3>(
+    vec2f(-1, -1),
+    vec2f(0,  1),
+    vec2f(1, -1),
 );
+
 struct Particle {
   position: vec2<f32>,
   velocity: vec2<f32>,
