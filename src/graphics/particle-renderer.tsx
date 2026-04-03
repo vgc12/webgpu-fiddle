@@ -22,7 +22,8 @@ export class ParticleRenderer extends StrategyBasedRenderer {
         private computeConfig: ComputeConfig = {
             particleCount : 2000,
             inOutBufferStruct: null,
-            workgroupSize: [64, 1, 1]
+            workgroupSize: [64, 1, 1],
+            initialData : null
         },
         resolution?: { width: number; height: number }
     ) {

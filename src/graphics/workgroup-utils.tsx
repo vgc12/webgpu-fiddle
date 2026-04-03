@@ -9,7 +9,7 @@ export function validateAndClampWorkgroupCount(
     count: [number, number, number],
     workgroupSize: [number, number, number]
 ): [number, number, number] {
-    // Validate workgroup size (must be ≤ 256 total invocations)
+    // Validate workgroup size (must be <= 256 total invocations)
     const totalInvocations = workgroupSize[0] * workgroupSize[1] * workgroupSize[2];
     if (totalInvocations > MAX_WORKGROUP_INVOCATIONS) {
         throw new Error(
@@ -47,7 +47,7 @@ export function calculateWorkgroupCount(
     workgroupSize: [number, number, number]
 ): [number, number, number] {
     const [sizeX, sizeY, sizeZ] = workgroupSize;
-
+    //console.log('calculateWorkgroupCount:', totalCount, workgroupSize);
     let workgroupCount: [number, number, number];
 
     if (sizeY === 1 && sizeZ === 1) {

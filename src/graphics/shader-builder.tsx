@@ -4,6 +4,9 @@ import defaultParticleVertexCompute from '@/shaders/particle.vertex.squares.wgsl
 import defaultParticleFragmentCompute from '@/shaders/particle.fragment.squares.wgsl';
 import defaultCanvasVertexShader from '@/shaders/canvas.vertex.blank.wgsl';
 import defaultCanvasFragmentShader from '@/shaders/canvas.fragment.sphere-sdf.wgsl';
+import golCompute from '@/shaders/particle.compute.gol.wgsl';
+import golVertex from '@/shaders/particle.vertex.gol.wgsl';
+import golFragment from '@/shaders/particle.fragment.gol.wgsl';
 
 import uniformStruct from '@/shaders/uniforms.wgsl';
 import type {ShaderConfig} from "@/graphics/shader-config.tsx";
@@ -20,28 +23,30 @@ export const ParticleShaderConfig: ShaderConfig = {
     fragmentShader: defaultParticleFragmentCompute
 };
 
+export const GolShaderConfig: ShaderConfig = {
+    computeShader: golCompute,
+    vertexShader: golVertex,
+    fragmentShader: golFragment
+};
 
 export function getWorkgroupSize(computeShader: string): [number, number, number] {
-    // Match @workgroup_size(X) or @workgroup_size(X, Y) or @workgroup_size(X, Y, Z)
     const match = computeShader.match(
         /@workgroup_size\s*\(\s*(\d+)(?:\s*,\s*(\d+))?(?:\s*,\s*(\d+))?\s*\)/
     );
 
     if (!match) {
-        console.warn('No @workgroup_size found in compute shader, using default [64, 1, 1]');
+        console.warn('No @workgroup_size found, using default [64, 1, 1]');
         return [64, 1, 1];
     }
+
+    //console.log('workgroup_size match:', match[0]);
 
     const x = parseInt(match[1]);
     const y = match[2] ? parseInt(match[2]) : 1;
     const z = match[3] ? parseInt(match[3]) : 1;
 
-    // Validate total invocations
-
-
     return [x, y, z];
 }
-
 
 export function injectUniformsIntoShader(wgslCode: string): { code: string; prefixLineCount: number; injections: { atLine: number; linesAdded: number }[] } {
     const prefix = uniformStruct + '\n';

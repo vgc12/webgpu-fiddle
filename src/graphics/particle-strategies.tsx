@@ -1,5 +1,6 @@
 ﻿import {InputOutputBuffers, UniformBuffer} from "@/graphics/input-output-buffers.tsx";
 import type {ComputeConfig} from "@/graphics/compute-config.tsx";
+import type {StructField} from "@/graphics/shader-builder.tsx";
 import type {ShaderConfig} from "@/graphics/shader-config.tsx";
 import type {IPipelineStrategy, IRenderStrategy, IResourceStrategy, IUpdateStrategy} from "./rendering-strategies";
 import {calculateWorkgroupCount} from "./workgroup-utils";
@@ -13,9 +14,54 @@ import {
     createParticleRenderLayout
 } from "@/graphics/particle-bind-group-functions.tsx";
 
-/**
- * Particle-specific pipeline creation strategy
- */
+type base_type = 'f32' | 'u32' | 'i32';
+
+function getFieldComponents(type: string): { count: number; baseType: base_type } {
+    if (type === 'f32') return { count: 1, baseType: 'f32' };
+    if (type === 'u32') return { count: 1, baseType: 'u32' };
+    if (type === 'i32') return { count: 1, baseType: 'i32' };
+
+    const vecMatch = type.match(/vec(\d)(?:<(\w+)>|([fiu]))/);
+    if (vecMatch) {
+        const count = parseInt(vecMatch[1]);
+        const inner = vecMatch[2] || ({ f: 'f32', i: 'i32', u: 'u32' } as Record<string, string>)[vecMatch[3]];
+        return { count, baseType: inner as base_type };
+    }
+
+    return { count: 1, baseType: 'f32' };
+}
+
+function writeTypedValue(view: DataView, byteOffset: number, value: number, baseType: base_type): void {
+    switch (baseType) {
+        case 'u32': view.setUint32(byteOffset, value >>> 0, true); break;
+        case 'i32': view.setInt32(byteOffset, value | 0, true); break;
+        case 'f32': view.setFloat32(byteOffset, value, true); break;
+    }
+}
+
+function resolveFieldValue(fieldValue: any, componentIndex: number, componentCount: number): number {
+    if (fieldValue == null) return 0;
+    if (componentCount === 1) return typeof fieldValue === 'number' ? fieldValue : 0;
+    return Array.isArray(fieldValue) && componentIndex < fieldValue.length ? fieldValue[componentIndex] : 0;
+}
+
+function randomValueForType(baseType: base_type): number {
+    return baseType === 'f32' ? Math.random() * 2 - 1 : (Math.random() > 0.7 ? 1 : 0);
+}
+
+type value_source = (fieldIndex: number, componentIndex: number, count: number, baseType: base_type) => number;
+
+function writeStructInstance(view: DataView, structOffset: number, fields: StructField[], getValue: value_source): void {
+    for (let f = 0; f < fields.length; f++) {
+        const field = fields[f];
+        const { count, baseType } = getFieldComponents(field.type);
+
+        for (let c = 0; c < count; c++) {
+            writeTypedValue(view, structOffset + field.offset + c * 4, getValue(f, c, count, baseType), baseType);
+        }
+    }
+}
+
 export class ParticlePipelineStrategy implements IPipelineStrategy {
     async createPipelines(
         device: GPUDevice,
@@ -27,33 +73,25 @@ export class ParticlePipelineStrategy implements IPipelineStrategy {
             renderBindGroupLayout: GPUBindGroupLayout
         }
     ): Promise<{ compute: GPUComputePipeline; render: GPURenderPipeline }> {
-        // Create shader modules
-    
-        
         const computeShaderModule = resourceManager.createShaderModule(
             shaderConfig.computeShader,
             'Particle Update Shader'
         );
-
         const vertexShaderModule = resourceManager.createShaderModule(
             shaderConfig.vertexShader,
             'Particle Vertex Shader'
         );
-
         const fragmentShaderModule = resourceManager.createShaderModule(
             shaderConfig.fragmentShader,
             'Particle Fragment Shader'
         );
 
-        // Create pipeline layouts
         const computePipelineLayout = device.createPipelineLayout({
             bindGroupLayouts: [context.computeBindGroupLayout]
         });
-
         const renderPipelineLayout = device.createPipelineLayout({
             bindGroupLayouts: [context.renderBindGroupLayout]
         });
-
 
         const compute = await new ComputePipelineBuilder(device)
             .setShaderModule(computeShaderModule)
@@ -74,62 +112,39 @@ export class ParticlePipelineStrategy implements IPipelineStrategy {
     }
 }
 
-/**
- * Particle-specific resource management strategy
- */
 export class ParticleResourceStrategy implements IResourceStrategy {
     private inOutBuffer: InputOutputBuffers;
     private uniformBuffer: UniformBuffer;
-
     private renderBindGroup: GPUBindGroup;
     private computeBindGroupA: GPUBindGroup;
     private computeBindGroupB: GPUBindGroup;
     private renderLayout: GPUBindGroupLayout;
     private computeLayout: GPUBindGroupLayout;
-    
 
     constructor(private computeConfig: ComputeConfig, private particleCount: number) {}
-
 
     initializeResources(device: GPUDevice, resourceManager: GPUResourceManager, _config: {
         resolution: { width: number; height: number }
     }): void {
-
         this.computeLayout = createParticleComputeLayout(device);
         this.renderLayout = createParticleRenderLayout(device);
 
-        this.inOutBuffer = new InputOutputBuffers(
-            device,
-            resourceManager,
-            this.computeConfig,
-        );
-
+        this.inOutBuffer = new InputOutputBuffers(device, resourceManager, this.computeConfig);
         this.uniformBuffer = new UniformBuffer(device, resourceManager);
-
-        // Initialize particle data
         this.writeInitialData();
 
-        // Create bind group managers
-        const [computeBindGroupA, computeBindGroupB] = createParticleComputeBindGroups(
-            {
-                device: device,
-                uniformBuffer: this.uniformBuffer,
-                particleBuffer: this.inOutBuffer,
-            },
-            createParticleComputeLayout(device)
-        );
-        this.computeBindGroupA = computeBindGroupA;
-        this.computeBindGroupB = computeBindGroupB;
+        const bufferRefs = {
+            device,
+            uniformBuffer: this.uniformBuffer,
+            particleBuffer: this.inOutBuffer,
+        };
 
-        this.renderLayout = createParticleRenderLayout(device);
-        this.renderBindGroup = createParticleRenderBindGroup({
-                device: device,
-                uniformBuffer: this.uniformBuffer,
-                particleBuffer: this.inOutBuffer,
-            }, createParticleRenderLayout(device)
+        [this.computeBindGroupA, this.computeBindGroupB] = createParticleComputeBindGroups(
+            bufferRefs, this.computeLayout
         );
-        
-        
+        this.renderBindGroup = createParticleRenderBindGroup(
+            bufferRefs, this.renderLayout
+        );
     }
 
     cleanup(): void {
@@ -160,18 +175,36 @@ export class ParticleResourceStrategy implements IResourceStrategy {
     }
 
     private writeInitialData(): void {
-        if (!this.computeConfig.inOutBufferStruct) {
+        const struct = this.computeConfig.inOutBufferStruct;
+        if (!struct) {
             throw new Error("inOutBufferStruct is null! Could not find struct in shader!");
         }
 
-        const initialData = new Float32Array(
-            this.particleCount * this.computeConfig.inOutBufferStruct.size / 4
-        );
-        for (let i = 0; i < initialData.length; i++) {
-            initialData[i] = Math.random() * 2 - 1; // Random values between -1 and 1
+        const buffer = new ArrayBuffer(this.particleCount * struct.size);
+        const view = new DataView(buffer);
+        const jsonData = this.computeConfig.initialData;
+
+        for (let i = 0; i < this.particleCount; i++) {
+            const getValue = jsonData !== null
+                ? this.jsonValueSource(jsonData, i, struct.fields.length === 1)
+                : (_f: number, _c: number, _count: number, baseType: base_type) => randomValueForType(baseType);
+
+            writeStructInstance(view, i * struct.size, struct.fields, getValue);
         }
 
-        this.inOutBuffer.writeBuffer(initialData);
+        this.inOutBuffer.writeBuffer(new Float32Array(buffer));
+    }
+
+    private jsonValueSource(jsonData: any[], instanceIndex: number, isSingleField: boolean): value_source {
+        const instance = instanceIndex < jsonData.length ? jsonData[instanceIndex] : null;
+
+        return (fieldIndex, componentIndex, count, _baseType) => {
+            const fieldValue = instance == null
+                ? null
+                : isSingleField ? instance : instance[fieldIndex];
+
+            return resolveFieldValue(fieldValue, componentIndex, count);
+        };
     }
 }
 
@@ -180,9 +213,6 @@ export class NullUpdateStrategy implements IUpdateStrategy {
     }
 }
 
-/**
- * Particle compute update strategy
- */
 export class ParticleComputeUpdateStrategy implements IUpdateStrategy {
     private pingPong: PingPongBindGroups
 
@@ -193,12 +223,11 @@ export class ParticleComputeUpdateStrategy implements IUpdateStrategy {
     ) {}
 
     update(encoder: GPUCommandEncoder, pipeline: GPUComputePipeline): void {
-
         if (!this.pingPong) {
             const bindGroups = this.resourceStrategy.BindGroups.compute;
-
             this.pingPong = new PingPongBindGroups(bindGroups as [GPUBindGroup, GPUBindGroup]);
         }
+
         const computePass = encoder.beginComputePass();
         computePass.setPipeline(pipeline);
         computePass.setBindGroup(0, this.pingPong.getNext());
@@ -207,24 +236,14 @@ export class ParticleComputeUpdateStrategy implements IUpdateStrategy {
             this.particleCount,
             this.computeConfig.workgroupSize
         );
-
-        console.log(
-            `Dispatching: [${workgroupCount}] with workgroup size [${this.computeConfig.workgroupSize}]`
-        );
-
         computePass.dispatchWorkgroups(...workgroupCount);
         computePass.end();
 
-
-        // Swap buffers after compute
         this.resourceStrategy.getInOutBuffer().swap();
     }
 }
 
 
-/**
- * Particle render strategy
- */
 export class ParticleRenderStrategy implements IRenderStrategy {
     render(
         encoder: GPUCommandEncoder,
@@ -257,25 +276,16 @@ export class PingPongBindGroups {
         private readonly bindGroups: [GPUBindGroup, GPUBindGroup]
     ) {}
 
-    /**
-     * Gets current bind group and advances to next
-     */
     getNext(): GPUBindGroup {
         const bindGroup = this.bindGroups[this.current];
         this.current = (this.current + 1) % 2;
         return bindGroup;
     }
 
-    /**
-     * Gets current bind group without advancing
-     */
     getCurrent(): GPUBindGroup {
         return this.bindGroups[this.current];
     }
 
-    /**
-     * Resets to first bind group
-     */
     reset(): void {
         this.current = 0;
     }

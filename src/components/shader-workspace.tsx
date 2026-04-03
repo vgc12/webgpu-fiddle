@@ -1,10 +1,8 @@
 ﻿import type {ShaderConfig} from "@/graphics/shader-config.tsx";
 import {
-    CanvasShaderConfig,
     getStructFromBufferBinding,
     getWorkgroupSize,
     injectUniformsIntoShader,
-    ParticleShaderConfig
 } from "@/graphics/shader-builder.tsx";
 import {useCallback, useEffect, useRef, useState} from "react";
 import type {IRenderer} from "@/graphics/i-renderer.tsx";
@@ -17,13 +15,13 @@ import {ButtonLightRectangle} from "@/components/ui/button.tsx";
 import type {render_settings, tab_id} from "@/components/app.tsx";
 import {buildInitialShaders} from "@/components/build-initial-shaders.tsx";
 
-export function ShaderWorkspace({shaderType, renderSettings, onChangeRenderSettings, onChangeShaderType}: {
+export function ShaderWorkspace({shaderType, shaderConfig, renderSettings, onChangeRenderSettings, onChangeTemplate}: {
     shaderType: 'canvas' | 'particle'
+    shaderConfig: ShaderConfig
     renderSettings: render_settings
-    onChangeShaderType: () => void;
+    onChangeTemplate: () => void;
     onChangeRenderSettings: () => void;
 }) {
-    const shaderConfig: ShaderConfig = shaderType === 'canvas' ? CanvasShaderConfig : ParticleShaderConfig;
     const initialShaders = buildInitialShaders(shaderConfig, shaderType);
 
     const [activeTab, setActiveTab] = useState<tab_id>('vertex');
@@ -74,14 +72,21 @@ export function ShaderWorkspace({shaderType, renderSettings, onChangeRenderSetti
 
         return tabArray;
     }, [shaderType]);
-    let options: ComputeConfig | undefined = undefined;
-    if (userShaders.compute != '') {
-        options = {
-            inOutBufferStruct: getStructFromBufferBinding(fullComputeShader.code, 'input'),
-            workgroupSize: getWorkgroupSize(fullComputeShader.code),
-            particleCount: renderSettings.instanceCount,
+
+    function createComputeConfig() {
+        let options: ComputeConfig | undefined = undefined;
+        if (userShaders.compute != '') {
+            options = {
+                inOutBufferStruct: getStructFromBufferBinding(fullComputeShader.code, 'input'),
+                workgroupSize: getWorkgroupSize(fullComputeShader.code),
+                particleCount: renderSettings.instanceCount,
+                initialData: renderSettings.initialData,
+            }
         }
+        return options;
     }
+
+    const options = createComputeConfig();
     const handleCompileAndApply = async () => {
         const newVertexShader = injectUniformsIntoShader(userShaders.vertex);
         const newFragmentShader = injectUniformsIntoShader(userShaders.fragment);
@@ -115,14 +120,7 @@ export function ShaderWorkspace({shaderType, renderSettings, onChangeRenderSetti
             return;
         }
 
-        let options: ComputeConfig | undefined = undefined;
-        if (userShaders.compute != '') {
-            options = {
-                inOutBufferStruct: getStructFromBufferBinding(newComputeShader.code, 'input'),
-                workgroupSize: getWorkgroupSize(newComputeShader.code),
-                particleCount: renderSettings.instanceCount,
-            }
-        }
+        const options = createComputeConfig();
 
         setFullVertexShader(newVertexShader);
         setFullFragmentShader(newFragmentShader);
@@ -160,7 +158,7 @@ export function ShaderWorkspace({shaderType, renderSettings, onChangeRenderSetti
                 <div className="flex gap-2 mb-2">
                     <ButtonLightRectangle
                         onClick={handleCompileAndApply}>Compile & Apply Shaders</ButtonLightRectangle>
-                    <ButtonLightRectangle onClick={onChangeShaderType}>Change Shader Type</ButtonLightRectangle>
+                    <ButtonLightRectangle onClick={onChangeTemplate}>Change Template</ButtonLightRectangle>
                     <ButtonLightRectangle onClick={onChangeRenderSettings}>Render Settings</ButtonLightRectangle>
                 </div>
                 <MonacoEditor

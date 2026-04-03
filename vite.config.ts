@@ -30,7 +30,6 @@ export default defineConfig(({}) =>
       target: 'esnext',
     },
 
-
     optimizeDeps: {
       include: ['react', 'react-dom', 'react-icons', 'react-icons/*', 'monaco-editor'],
     }
