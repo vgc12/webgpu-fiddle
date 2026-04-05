@@ -1,7 +1,7 @@
-﻿import type {ShaderConfig} from "@/graphics/shader-config.tsx";
+﻿import type {ShaderConfig} from "@/graphics/shaders/shader-config.tsx";
 import type {IPipelineStrategy, IRenderStrategy, IResourceStrategy, IUpdateStrategy} from "./rendering-strategies";
-import {BaseWebGPURenderer} from "@/graphics/base-web-gpu-renderer.tsx";
-import type {render_settings} from "@/components/app.tsx";
+import {BaseWebGPURenderer} from "@/graphics/renderers/base-web-gpu-renderer.tsx";
+import type {render_settings} from "@/types.tsx";
 
 
 /**

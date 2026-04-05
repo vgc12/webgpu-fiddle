@@ -1,7 +1,10 @@
-const squareArray: array<vec2f, 3> = array<vec2f, 3>(
+const squareArray: array<vec2f, 6> = array<vec2f, 6>(
     vec2f(-1, -1),
-    vec2f(0,  1),
-    vec2f(1, -1),
+    vec2f(-1,  1),
+    vec2f( 1, -1),
+    vec2f(-1,  1),
+    vec2f( 1,  1),
+    vec2f( 1, -1),
 );
 
 struct Particle {
@@ -27,7 +30,7 @@ fn vertexMain(
     var output: VertexOutput;
 
     // Size in pixels (will be square regardless of aspect ratio)
-    let sizeInPixels = 40.0; // 40 pixels
+    let sizeInPixels = 15.0;
     
     // Convert particle position from 0-1 to pixel coordinates
     let posInPixels = particlePos * uniforms.resolution;
@@ -46,8 +49,7 @@ fn vertexMain(
     );
 
     let speed = length(particleVel);
-    let vi = f32(vertexIndex) / 6.0;
-    output.color = vec4<f32>(particlePos, vi, 1.0);
+    output.color = vec4<f32>(particlePos, speed, 1.0);
 
     return output;
 }

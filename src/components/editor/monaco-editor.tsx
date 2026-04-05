@@ -1,17 +1,17 @@
 import {useEffect, useRef} from 'react';
 import * as monaco from 'monaco-editor';
 import {cn} from '@/utils/utils';
-import type {shader_diagnostic} from '@/graphics/shader-validator.tsx';
+import type {shader_diagnostic} from '@/graphics/shaders/shader-validator.tsx';
 
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
 import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
-import {ButtonLightRectangle} from "@/components/ui/button.tsx";
+
 
 // Configure Monaco Editor workers
-self.MonacoEnvironment = {
+(self as any).MonacoEnvironment = {
     getWorker(_: string, label: string) {
         switch (label) {
             case 'json':
@@ -49,6 +49,7 @@ interface MonacoEditorProps {
     tabs?: Tab[];
     activeTabId?: string;
     onTabChange?: (tabId: string) => void;
+    darkMode?: boolean;
 }
 
 const SEVERITY_MAP: Record<string, monaco.MarkerSeverity> = {
@@ -66,7 +67,8 @@ export function MonacoEditor({
                                  className,
                                  tabs,
                                  activeTabId,
-                                 onTabChange
+                                 onTabChange,
+                                 darkMode = true
                              }: MonacoEditorProps) {
     const editorRef = useRef<HTMLDivElement>(null);
     const monacoRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -79,7 +81,7 @@ export function MonacoEditor({
             monacoRef.current = monaco.editor.create(editorRef.current, {
                 value,
                 language,
-                theme: 'vs-dark',
+                theme: darkMode ? 'vs-dark' : 'vs',
                 lineNumbers: "on",
                 automaticLayout: true,
                 scrollBeyondLastLine: false,
@@ -138,6 +140,13 @@ export function MonacoEditor({
     }, [language]);
 
     useEffect(() => {
+        if (monacoRef.current) {
+            monacoRef.current.updateOptions({theme: darkMode ? 'vs-dark' : 'vs'});
+            monaco.editor.setTheme(darkMode ? 'vs-dark' : 'vs');
+        }
+    }, [darkMode]);
+
+    useEffect(() => {
         const editorModel = monacoRef.current?.getModel();
         if (!editorModel) {
             return;
@@ -173,14 +182,19 @@ export function MonacoEditor({
 
     return (
         <div className={cn('flex flex-col h-full', className)}>
-            <div className="flex gap-1 bg-gray-900 border-b border-gray-700 px-2 ">
+            <div className="flex gap-0 bg-gray-100 dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700">
                 {tabs.map(tab => (
-                    <ButtonLightRectangle
+                    <button
                         key={tab.id}
                         onClick={() => onTabChange?.(tab.id)}
-                        className={cn()}>
+                        className={cn(
+                            'px-4 py-2 text-xs font-medium transition-colors border-b-2',
+                            tab.id === activeTabId
+                                ? 'text-black dark:text-white border-blue-500 bg-gray-200 dark:bg-gray-800'
+                                : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-800/50'
+                        )}>
                         {tab.label}
-                    </ButtonLightRectangle>
+                    </button>
                 ))}
             </div>
             <div ref={editorRef} className="flex-1"/>

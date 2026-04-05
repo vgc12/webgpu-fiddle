@@ -1,4 +1,4 @@
-﻿import type {StructInfo} from "@/graphics/shader-builder.tsx";
+﻿import type {StructInfo} from "@/graphics/shaders/shader-builder.tsx";
 
 export interface ComputeConfig {
     particleCount: number;

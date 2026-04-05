@@ -1,178 +1,78 @@
-﻿import type {ShaderConfig} from "@/graphics/shader-config.tsx";
-import {
-    getStructFromBufferBinding,
-    getWorkgroupSize,
-    injectUniformsIntoShader,
-} from "@/graphics/shader-builder.tsx";
-import {useCallback, useEffect, useRef, useState} from "react";
+import type {ShaderConfig} from "@/graphics/shaders/shader-config.tsx";
+import {useRef} from "react";
 import type {IRenderer} from "@/graphics/i-renderer.tsx";
-import {type shader_diagnostic, validateShader} from "@/graphics/shader-validator.tsx";
-import {MonacoEditor, type Tab} from "@/monaco/monaco-editor.tsx";
-import type {ComputeConfig} from "@/graphics/compute-config.tsx";
-import {Panel} from "@/components/ui/panel.tsx";
+import {MonacoEditor} from "@/components/editor/monaco-editor.tsx";
 import {WebGPUCanvas} from "@/components/ui/main-canvas.tsx";
-import {ButtonLightRectangle} from "@/components/ui/button.tsx";
-import type {render_settings, tab_id} from "@/components/app.tsx";
-import {buildInitialShaders} from "@/components/build-initial-shaders.tsx";
+import {SplitPane} from "@/components/ui/split-pane.tsx";
+import {Toolbar} from "@/components/ui/toolbar.tsx";
+import type {dark_mode_props, render_settings} from "@/types.tsx";
+import {useShaderCompilation} from "@/hooks/use-shader-compilation.tsx";
 
-export function ShaderWorkspace({shaderType, shaderConfig, renderSettings, onChangeRenderSettings, onChangeTemplate}: {
+export function ShaderWorkspace({shaderType, shaderConfig, renderSettings, onChangeRenderSettings, onChangeTemplate, templateName, darkMode}: {
     shaderType: 'canvas' | 'particle'
     shaderConfig: ShaderConfig
     renderSettings: render_settings
+    templateName: string
     onChangeTemplate: () => void;
     onChangeRenderSettings: () => void;
+    darkMode: dark_mode_props;
 }) {
-    const initialShaders = buildInitialShaders(shaderConfig, shaderType);
-
-    const [activeTab, setActiveTab] = useState<tab_id>('vertex');
-    const activeTabRef = useRef(activeTab);
-    activeTabRef.current = activeTab;
-
-    const [userShaders, setUserShaders] = useState<Record<tab_id, string>>(initialShaders);
-
-    const [fullVertexShader, setFullVertexShader] = useState(injectUniformsIntoShader(initialShaders.vertex));
-    const [fullFragmentShader, setFullFragmentShader] = useState(injectUniformsIntoShader(initialShaders.fragment));
-    const [fullComputeShader, setFullComputeShader] = useState(injectUniformsIntoShader(initialShaders.compute));
-
     const rendererRef = useRef<IRenderer | null>(null);
 
-    const emptyDiagnostics: Record<tab_id, shader_diagnostic[]> = {vertex: [], fragment: [], compute: []};
-    const [diagnostics, setDiagnostics] = useState<Record<tab_id, shader_diagnostic[]>>(emptyDiagnostics);
-
-    // Debounced live validation — validates the active tab's shader as the user types
-    useEffect(() => {
-        const device = rendererRef.current?.device;
-        if (!device) {
-            return;
-        }
-
-        const timer = setTimeout(async () => {
-            const tab = activeTabRef.current;
-            const userCode = userShaders[tab];
-            if (!userCode) {
-                setDiagnostics(prev => ({...prev, [tab]: []}));
-                return;
-            }
-            const fullCode = injectUniformsIntoShader(userCode);
-            const diags = await validateShader(device, userCode, fullCode.code, tab, fullCode.prefixLineCount,fullCode.injections );
-            setDiagnostics(prev => ({...prev, [tab]: diags}));
-        }, 500);
-
-        return () => clearTimeout(timer);
-    }, [userShaders]);
-
-    const getTabs = useCallback(() => {
-        const tabArray: Tab[] = [
-            {id: 'vertex', label: 'Vertex'},
-            {id: 'fragment', label: 'Fragment'},
-        ]
-        if (shaderType === 'particle') {
-            tabArray.unshift({id: 'compute', label: 'Compute'});
-        }
-
-        return tabArray;
-    }, [shaderType]);
-
-    function createComputeConfig() {
-        let options: ComputeConfig | undefined = undefined;
-        if (userShaders.compute != '') {
-            options = {
-                inOutBufferStruct: getStructFromBufferBinding(fullComputeShader.code, 'input'),
-                workgroupSize: getWorkgroupSize(fullComputeShader.code),
-                particleCount: renderSettings.instanceCount,
-                initialData: renderSettings.initialData,
-            }
-        }
-        return options;
-    }
-
-    const options = createComputeConfig();
-    const handleCompileAndApply = async () => {
-        const newVertexShader = injectUniformsIntoShader(userShaders.vertex);
-        const newFragmentShader = injectUniformsIntoShader(userShaders.fragment);
-        const newComputeShader = injectUniformsIntoShader(userShaders.compute);
-
-        const device = rendererRef.current?.device;
-        if (!device) {
-            return;
-        }
-
-        // Validate all shaders and collect diagnostics
-        const [vertexDiags, fragmentDiags, computeDiags] = await Promise.all([
-            validateShader(device, userShaders.vertex, newVertexShader.code, 'vertex', newVertexShader.prefixLineCount, newVertexShader.injections),
-            validateShader(device, userShaders.fragment, newFragmentShader.code, 'fragment', newVertexShader.prefixLineCount, newComputeShader.injections),
-            userShaders.compute
-            ? validateShader(device, userShaders.compute, newComputeShader.code, 'compute', newComputeShader.prefixLineCount, newComputeShader.injections)
-            : Promise.resolve([]),
-        ]);
-
-        const newDiagnostics: Record<tab_id, shader_diagnostic[]> = {
-            vertex: vertexDiags,
-            fragment: fragmentDiags,
-            compute: computeDiags,
-        };
-        setDiagnostics(newDiagnostics);
-
-        const hasErrors = [...vertexDiags, ...fragmentDiags, ...computeDiags]
-            .some(d => d.severity === 'error');
-
-        if (hasErrors) {
-            return;
-        }
-
-        const options = createComputeConfig();
-
-        setFullVertexShader(newVertexShader);
-        setFullFragmentShader(newFragmentShader);
-        setFullComputeShader(newComputeShader);
-
-        if (rendererRef.current) {
-            try {
-                await rendererRef.current.recompileShaders({
-                    computeShader: newComputeShader.code,
-                    vertexShader: newVertexShader.code,
-                    fragmentShader: newFragmentShader.code,
-                }, options);
-            }
-            catch (error) {
-                console.error('Failed to recompile shaders:', error);
-            }
-        }
-    }
-
-    const handleEditorChange = useCallback((value: string) => {
-        setUserShaders(prev => ({...prev, [activeTabRef.current]: value}));
-    }, []);
+    // this is an affront to god in every religion but still genuinely better than having this all within this file.
+    const {
+        activeTab,
+        setActiveTab,
+        userShaders,
+        fullVertexShader,
+        fullFragmentShader,
+        fullComputeShader,
+        diagnostics,
+        computeConfig,
+        getTabs,
+        handleCompileAndApply,
+        handleEditorChange,
+        handleDownloadShaders,
+    } = useShaderCompilation(shaderConfig, shaderType, renderSettings, rendererRef);
 
     return (
-        <div className={'flex flex-row h-screen w-screen'}>
-            <Panel resizeDirection={"horizontal"} resizable={true} className={'w-[66vw] h-[90vh]'}>
-                <WebGPUCanvas rendererRef={rendererRef} computeConfig={options} renderSettings={renderSettings}
-                              shaderType={shaderType}
-                              computeShader={fullComputeShader.code}
-                              fragmentShader={fullFragmentShader.code}
-                              vertexShader={fullVertexShader.code}></WebGPUCanvas>
-            </Panel>
+        <div className="flex flex-col h-screen w-screen overflow-hidden px-2  bg-gray-50 dark:bg-gray-900 ">
+            <Toolbar
+                templateName={templateName}
+                darkMode={darkMode}
+                onCompile={handleCompileAndApply}
+                onChangeTemplate={onChangeTemplate}
+                onChangeRenderSettings={onChangeRenderSettings}
+                onDownload={handleDownloadShaders}
+            />
 
-            <Panel grow={true} resizeDirection={"horizontal"} resizable={true} className={"h-[90vh] mx-3"}>
-                <div className="flex gap-2 mb-2">
-                    <ButtonLightRectangle
-                        onClick={handleCompileAndApply}>Compile & Apply Shaders</ButtonLightRectangle>
-                    <ButtonLightRectangle onClick={onChangeTemplate}>Change Template</ButtonLightRectangle>
-                    <ButtonLightRectangle onClick={onChangeRenderSettings}>Render Settings</ButtonLightRectangle>
+            <SplitPane className="grow min-h-0 my-4 rounded-sm dark:bg-gray-800 bg-gray-100">
+                <div className="flex flex-col h-full p-2">
+                    <div className="flex-1 overflow-hidden">
+                        <WebGPUCanvas rendererRef={rendererRef} computeConfig={computeConfig} renderSettings={renderSettings}
+                                      shaderType={shaderType}
+                                      computeShader={fullComputeShader.code}
+                                      fragmentShader={fullFragmentShader.code}
+                                      vertexShader={fullVertexShader.code} />
+                    </div>
                 </div>
-                <MonacoEditor
-                    value={userShaders[activeTab]}
-                    language="wgsl"
-                    onChange={handleEditorChange}
-                    onCompile={handleCompileAndApply}
-                    diagnostics={diagnostics[activeTab]}
-                    tabs={getTabs()}
-                    activeTabId={activeTab}
-                    onTabChange={setActiveTab as (s: string) => void}
-                    className="grow"
-                />
-            </Panel>
+                <div className="flex flex-col h-full p-2">
+                    <div className="flex-1 overflow-hidden flex flex-col">
+                        <MonacoEditor
+                            value={userShaders[activeTab]}
+                            language="wgsl"
+                            onChange={handleEditorChange}
+                            onCompile={handleCompileAndApply}
+                            diagnostics={diagnostics[activeTab]}
+                            tabs={getTabs()}
+                            activeTabId={activeTab}
+                            onTabChange={setActiveTab as (s: string) => void}
+                            darkMode={darkMode.isDarkMode}
+                            className="grow"
+                        />
+                    </div>
+                </div>
+            </SplitPane>
         </div>
     );
 }

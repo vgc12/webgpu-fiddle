@@ -1,9 +1,9 @@
-﻿import type {IPipelineStrategy, IRenderStrategy, IResourceStrategy} from "@/graphics/rendering-strategies.tsx";
-import {UniformBuffer} from "@/graphics/input-output-buffers.tsx";
+﻿import type {IPipelineStrategy, IRenderStrategy, IResourceStrategy} from "@/graphics/renderers/rendering-strategies.tsx";
+import {UniformBuffer} from "@/graphics/pipelines/input-output-buffers.tsx";
 import type {GPUResourceManager} from "@/graphics/gpu-resource-manager.tsx";
-import {createCanvasRenderBindGroup, createCanvasRenderLayout} from "@/graphics/canvas-bind-group-functions.tsx";
-import type {ShaderConfig} from "@/graphics/shader-config.tsx";
-import {RenderPipelineBuilder} from "@/graphics/render-pipeline-builder.tsx";
+import {createCanvasRenderBindGroup, createCanvasRenderLayout} from "@/graphics/renderers/canvas-bind-group-functions.tsx";
+import type {ShaderConfig} from "@/graphics/shaders/shader-config.tsx";
+import {RenderPipelineBuilder} from "@/graphics/pipelines/render-pipeline-builder.tsx";
 
 export class CanvasResourceStrategy implements IResourceStrategy {
     private uniformBuffer: UniformBuffer;

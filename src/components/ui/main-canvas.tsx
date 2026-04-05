@@ -1,9 +1,9 @@
 import React, {useCallback, useEffect, useRef} from 'react';
 import type {IRenderer} from "@/graphics/i-renderer.tsx";
-import {CanvasRenderer} from "@/graphics/canvas-renderer.tsx";
-import {ParticleRenderer} from "@/graphics/particle-renderer.tsx";
-import type {ComputeConfig} from "@/graphics/compute-config.tsx";
-import type {render_settings} from "@/components/app.tsx";
+import {CanvasRenderer} from "@/graphics/renderers/canvas-renderer.tsx";
+import {ParticleRenderer} from "@/graphics/renderers/particle-renderer.tsx";
+import type {ComputeConfig} from "@/graphics/pipelines/compute-config.tsx";
+import type {render_settings} from "@/types.tsx";
 
 interface Shaders {
     computeShader: string;

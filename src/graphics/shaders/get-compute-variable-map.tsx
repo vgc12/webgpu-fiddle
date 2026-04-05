@@ -1,4 +1,4 @@
-﻿import type {ShaderVariableMap} from "@/graphics/shader-variable-map.tsx";
+﻿import type {ShaderVariableMap} from "@/graphics/shaders/shader-variable-map.tsx";
 
 /**
  * Gets the variable mapping for compute shaders

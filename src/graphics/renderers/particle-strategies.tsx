@@ -1,18 +1,18 @@
-﻿import {InputOutputBuffers, UniformBuffer} from "@/graphics/input-output-buffers.tsx";
-import type {ComputeConfig} from "@/graphics/compute-config.tsx";
-import type {StructField} from "@/graphics/shader-builder.tsx";
-import type {ShaderConfig} from "@/graphics/shader-config.tsx";
+﻿import {InputOutputBuffers, UniformBuffer} from "@/graphics/pipelines/input-output-buffers.tsx";
+import type {ComputeConfig} from "@/graphics/pipelines/compute-config.tsx";
+import type {StructField} from "@/graphics/shaders/shader-builder.tsx";
+import type {ShaderConfig} from "@/graphics/shaders/shader-config.tsx";
 import type {IPipelineStrategy, IRenderStrategy, IResourceStrategy, IUpdateStrategy} from "./rendering-strategies";
-import {calculateWorkgroupCount} from "./workgroup-utils";
+import {calculateWorkgroupCount} from "@/graphics/utils/workgroup-utils.tsx";
 import type {GPUResourceManager} from "@/graphics/gpu-resource-manager.tsx";
-import {ComputePipelineBuilder} from "@/graphics/compute-pipeline-builder.tsx";
-import {RenderPipelineBuilder} from "@/graphics/render-pipeline-builder.tsx";
+import {ComputePipelineBuilder} from "@/graphics/pipelines/compute-pipeline-builder.tsx";
+import {RenderPipelineBuilder} from "@/graphics/pipelines/render-pipeline-builder.tsx";
 import {
     createParticleComputeBindGroups,
     createParticleComputeLayout,
     createParticleRenderBindGroup,
     createParticleRenderLayout
-} from "@/graphics/particle-bind-group-functions.tsx";
+} from "@/graphics/renderers/particle-bind-group-functions.tsx";
 
 type base_type = 'f32' | 'u32' | 'i32';
 
@@ -46,7 +46,7 @@ function resolveFieldValue(fieldValue: any, componentIndex: number, componentCou
 }
 
 function randomValueForType(baseType: base_type): number {
-    return baseType === 'f32' ? Math.random() * 2 - 1 : (Math.random() > 0.7 ? 1 : 0);
+    return baseType === 'f32' ? Math.random() * 2 - 1 : (Math.random() > 0.65 ? 1 : 0);
 }
 
 type value_source = (fieldIndex: number, componentIndex: number, count: number, baseType: base_type) => number;

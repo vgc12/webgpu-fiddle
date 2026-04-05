@@ -3,7 +3,7 @@ import {AnimationController} from "@/graphics/animation-controller.tsx";
 import {GPUResourceManager} from "@/graphics/gpu-resource-manager.tsx";
 import type {IRenderer} from "@/graphics/i-renderer.tsx";
 import {Time} from "@/utils/time.ts";
-import type {ShaderConfig} from "@/graphics/shader-config.tsx";
+import type {ShaderConfig} from "@/graphics/shaders/shader-config.tsx";
 
 
 /**

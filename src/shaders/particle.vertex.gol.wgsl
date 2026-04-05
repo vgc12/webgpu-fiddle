@@ -46,7 +46,7 @@ fn vertexMain(
     // Convert from pixel space to clip space (-1 to 1)
     let clipPos = vec2<f32>(
         pixelPos.x / resolution.x * 2.0 - 1.0,
-        pixelPos.y / resolution.y * 2.0 - 1.0,
+        1.0 - pixelPos.y / resolution.y * 2.0,
     );
 
     let alive = input[instanceIndex].state == 1u;

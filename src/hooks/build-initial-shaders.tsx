@@ -1,6 +1,6 @@
-﻿import type {ShaderConfig} from "@/graphics/shader-config.tsx";
-import {generateVariableDocumentation} from "@/graphics/generate-variable-documentation.tsx";
-import type {tab_id} from "@/components/app.tsx";
+﻿import type {ShaderConfig} from "@/graphics/shaders/shader-config.tsx";
+import {generateVariableDocumentation} from "@/graphics/shaders/generate-variable-documentation.tsx";
+import type {tab_id} from "@/types.tsx";
 
 export function buildInitialShaders(config: ShaderConfig,renderType : 'canvas' | 'particle' ): Record<tab_id, string> {
     return {

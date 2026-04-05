@@ -1,5 +1,5 @@
 ﻿import {GPUResourceManager} from "@/graphics/gpu-resource-manager.tsx";
-import type {ComputeConfig} from "@/graphics/compute-config.tsx";
+import type {ComputeConfig} from "@/graphics/pipelines/compute-config.tsx";
 
 export interface IBufferSystem {
     initializeBuffers(): void;

@@ -97,13 +97,7 @@ fn fragmentMain(
     let r2 = rot2D(m.x);
     ro = vec3f(r2 * ro.xz, ro.y).xzy;
     rd = vec3f(r2 * rd.xz, rd.y).xzy;
-/*
-    ro.yz *= rot2D(-m.y);
-    rd.yz *= rot2D(-m.y);
 
-    ro.xz *= rot2D(-m.x);
-    rd.xz *= rot2D(-m.x);
-*/
     var col : vec3f = vec3f(0);
 
     var t : f32 = 0.; // total raymarch distance

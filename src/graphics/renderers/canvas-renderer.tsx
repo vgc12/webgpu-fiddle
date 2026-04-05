@@ -1,9 +1,9 @@
 ﻿// Draws a rectangle that covers the whole screen
-import {StrategyBasedRenderer} from "@/graphics/strategy-based-renderer.tsx";
-import {NullUpdateStrategy} from "@/graphics/particle-strategies.tsx";
-import type {ShaderConfig} from "@/graphics/shader-config.tsx";
-import {CanvasPipelineStrategy, CanvasRenderStrategy, CanvasResourceStrategy} from "@/graphics/canvas-strategies.tsx";
-import type {render_settings} from "@/components/app.tsx";
+import {StrategyBasedRenderer} from "@/graphics/renderers/strategy-based-renderer.tsx";
+import {NullUpdateStrategy} from "@/graphics/renderers/particle-strategies.tsx";
+import type {ShaderConfig} from "@/graphics/shaders/shader-config.tsx";
+import {CanvasPipelineStrategy, CanvasRenderStrategy, CanvasResourceStrategy} from "@/graphics/renderers/canvas-strategies.tsx";
+import type {render_settings} from "@/types.tsx";
 
 export class CanvasRenderer extends StrategyBasedRenderer {
     private canvasResourceStrategy: CanvasResourceStrategy;

@@ -1,4 +1,4 @@
-﻿import type {VertexBufferLayout} from "@/graphics/vertex-buffer-layout.tsx";
+﻿import type {VertexBufferLayout} from "@/graphics/utils/vertex-buffer-layout.tsx";
 
 export class RenderPipelineBuilder {
     private layout: GPUPipelineLayout | 'auto' = 'auto';

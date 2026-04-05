@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-WebGPU shader editor and renderer — a browser-based tool for writing WGSL shaders with live preview. Users edit
-vertex/fragment/compute shaders in a Monaco editor and compile them to see results rendered via WebGPU.
+WebGPU shader editor and renderer — a browser-based tool for writing WGSL shaders with live preview. Users pick a
+template, edit vertex/fragment/compute shaders in a Monaco editor, and see results rendered via WebGPU in real time.
 
 ## Commands
 
 - `npm run dev` — Start Vite dev server
-- `npm run build` — TypeScript check + Vite production build
+- `npm run build` — TypeScript check (`tsc`) + Vite production build
 - `npm run lint` — ESLint (`.ts` files)
 - `npm run deploy` — Deploy to GitHub Pages via gh-pages
 
@@ -22,46 +22,44 @@ No test runner is configured.
 
 ## Architecture
 
-### Rendering Pipeline
+### App Flow
 
-The renderer uses **Template Method + Strategy** patterns:
+1. User selects a template from `TemplateSelector` (defined in `src/templates.tsx`)
+2. `App` passes the template's `ShaderConfig`, shader type, and render settings to `ShaderWorkspace`
+3. `ShaderWorkspace` composes the Monaco editor and `WebGPUCanvas`, using `useShaderCompilation` hook for state
+4. `WebGPUCanvas` (`src/components/ui/main-canvas.tsx`) creates the appropriate renderer and exposes it via ref
 
-1. **IRenderer** (`src/graphics/i-renderer.tsx`) — interface: `start()`, `stop()`, `recompileShaders()`, `destroy()`
-2. **BaseWebGPURenderer** — abstract base managing lifecycle (init → animate → update → destroy), owns `WebGPUContext`,
-   `GPUResourceManager`, `AnimationController`, `Time`
-3. **StrategyBasedRenderer** — composes four strategy interfaces (`IPipelineStrategy`, `IResourceStrategy`,
-   `IUpdateStrategy`, `IRenderStrategy`) defined in `rendering-strategies.tsx`
-4. **Concrete renderers:**
-    - **CanvasRenderer** — full-screen quad (6 vertices, no compute). Strategies in `canvas-strategies.tsx`
-    - **ParticleRenderer** — compute shader updates particles with ping-pong double buffering, then renders. Strategies
-      in `particle-strategies.tsx`
+### Rendering Pipeline (Template Method + Strategy)
 
-### Shader System
+- **IRenderer** (`src/graphics/i-renderer.tsx`) — interface: `start()`, `stop()`, `recompileShaders()`, `destroy()`
+- **BaseWebGPURenderer** (`src/graphics/renderers/`) — abstract base managing lifecycle (init → animate → update →
+  destroy), owns `WebGPUContext`, `GPUResourceManager`, `AnimationController`, `Time`
+- **StrategyBasedRenderer** — composes four strategy interfaces (`IPipelineStrategy`, `IResourceStrategy`,
+  `IUpdateStrategy`, `IRenderStrategy`) defined in `src/graphics/renderers/rendering-strategies.tsx`
+- **CanvasRenderer** (`src/graphics/renderers/canvas-renderer.tsx`) — full-screen quad, no compute
+- **ParticleRenderer** (`src/graphics/renderers/particle-renderer.tsx`) — compute + render with ping-pong double
+  buffering
 
-- Default `.wgsl` shaders live in `src/shaders/` and are imported as strings via `vite-plugin-string`
-- `shader-builder.tsx` provides: `injectUniformsIntoShader()` (adds uniform struct + local variable assignments into
-  entry point functions), `getWorkgroupSize()`, `getStructFromBufferBinding()`, WGSL struct parsing with
-  alignment/offset calculation
-- `ShaderConfig` type (`shader-config.tsx`): `{ vertexShader, fragmentShader, computeShader? }`
-- `type-info.tsx` maps WGSL types to their byte sizes and alignments
+### Key Subsystems
 
-### Buffer Management
+- **Shader system** (`src/graphics/shaders/`) — `shader-builder.tsx` handles uniform injection into WGSL entry points,
+  workgroup size parsing, and WGSL struct parsing with alignment/offset calculation. `shader-config.tsx` defines the
+  `ShaderConfig` type. `shader-validator.tsx` validates shaders.
+- **Pipeline builders** (`src/graphics/pipelines/`) — `RenderPipelineBuilder` and `ComputePipelineBuilder` use fluent
+  builder APIs. `input-output-buffers.tsx` provides ping-pong double buffering with `swap()`.
+- **Graphics utils** (`src/graphics/utils/`) — WGSL type info (byte sizes/alignments), vertex buffer layouts, fragment
+  outputs, workgroup utilities
+- **Templates** (`src/templates.tsx`) — `TEMPLATES` array of `template_def`, each specifying shader type, `ShaderConfig`,
+  and default render settings (vertex draw count, instance count, initial data)
+- **Hooks** (`src/hooks/`) — `useShaderCompilation` manages shader state, compilation, and renderer recompilation;
+  `useDarkMode` and `buildInitialShaders` are also here
+- **Editor** (`src/components/editor/monaco-editor.tsx`) — tab-based Monaco editor with WGSL language support
+- **Default shaders** (`src/shaders/`) — `.wgsl` files imported as strings via `vite-plugin-string`, named as
+  `{renderer}.{stage}.{template}.wgsl`
 
-- `UniformBuffer` — 16-byte buffer for resolution/aspect/time
-- `InputOutputBuffers` — ping-pong double buffering for compute I/O with `swap()`
-- `GPUResourceManager` — factory for buffers, shader modules, bind groups
+### Shared Types
 
-### Pipeline Builders
-
-`RenderPipelineBuilder` and `ComputePipelineBuilder` use a fluent builder API to construct GPU pipelines.
-
-### UI Layer
-
-- **app.tsx** — top-level state (shader type, active tab, user shader text), coordinates compilation and renderer
-  recompilation via `rendererRef`
-- **WebGPUCanvas** (`main-canvas.tsx`) — mounts canvas, creates renderer on init, exposes renderer ref to parent
-- **MonacoEditor** (`src/monaco/`) — tab-based editor with custom WGSL language registration (`registerWGSL.tsx`)
-- **Panel** — resizable container with drag-to-resize
+`src/types.tsx` — `tab_id`, `render_settings`, `template_def`
 
 ## Naming Conventions (ESLint-enforced)
 
@@ -74,6 +72,7 @@ The renderer uses **Template Method + Strategy** patterns:
 
 ## Notes
 
-- All `.tsx` extension is used throughout, including non-React files in `graphics/`
+- `.tsx` extension is used throughout, including non-React files in `graphics/`
 - `@typescript-eslint/no-explicit-any` is disabled
 - WGSL files get type declarations from `src/shader-module.d.ts`
+- UI uses Tailwind CSS v4 (via `@tailwindcss/vite`), Radix UI primitives, and `lucide-react` icons

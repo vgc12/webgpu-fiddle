@@ -4,10 +4,10 @@ import {
     ParticlePipelineStrategy,
     ParticleRenderStrategy,
     ParticleResourceStrategy
-} from "@/graphics/particle-strategies.tsx";
-import type {ShaderConfig} from "@/graphics/shader-config.tsx";
-import type {ComputeConfig} from "@/graphics/compute-config.tsx";
-import type {render_settings} from "@/components/app.tsx";
+} from "@/graphics/renderers/particle-strategies.tsx";
+import type {ShaderConfig} from "@/graphics/shaders/shader-config.tsx";
+import type {ComputeConfig} from "@/graphics/pipelines/compute-config.tsx";
+import type {render_settings} from "@/types.tsx";
 
 /**
  * Particle Renderer draws multiple particles at once

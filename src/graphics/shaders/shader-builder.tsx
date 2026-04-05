@@ -1,26 +1,43 @@
-﻿import {TypeInfo} from "@/graphics/type-info.tsx";
-import defaultParticleCompute from '@/shaders/particle.compute.squares.wgsl';
-import defaultParticleVertexCompute from '@/shaders/particle.vertex.squares.wgsl';
-import defaultParticleFragmentCompute from '@/shaders/particle.fragment.squares.wgsl';
-import defaultCanvasVertexShader from '@/shaders/canvas.vertex.blank.wgsl';
-import defaultCanvasFragmentShader from '@/shaders/canvas.fragment.sphere-sdf.wgsl';
+﻿import {TypeInfo} from "@/graphics/utils/type-info.tsx";
+import squareParticleCompute from '@/shaders/particle.compute.squares.wgsl';
+import squareParticleVertexCompute from '@/shaders/particle.vertex.squares.wgsl';
+import squareParticleFragmentCompute from '@/shaders/particle.fragment.squares.wgsl';
+import blankCanvasVertexShader from '@/shaders/canvas.vertex.blank.wgsl';
+import blankCanvasFragmentShader from '@/shaders/canvas.fragment.blank.wgsl'
+import raymachCanvasFragmentShader from '@/shaders/canvas.fragment.sphere-sdf.wgsl';
+import blankParticleComputeShader from '@/shaders/particle.compute.blank.wgsl';
+import blankParticleVertexShader from '@/shaders/particle.vertex.blank.wgsl';
+import blankParticleFragmentShader from '@/shaders/particle.fragment.blank.wgsl';
+
 import golCompute from '@/shaders/particle.compute.gol.wgsl';
 import golVertex from '@/shaders/particle.vertex.gol.wgsl';
 import golFragment from '@/shaders/particle.fragment.gol.wgsl';
 
 import uniformStruct from '@/shaders/uniforms.wgsl';
-import type {ShaderConfig} from "@/graphics/shader-config.tsx";
+import type {ShaderConfig} from "@/graphics/shaders/shader-config.tsx";
 
-export const CanvasShaderConfig : ShaderConfig = {
-    vertexShader: defaultCanvasVertexShader,
-    fragmentShader: defaultCanvasFragmentShader,
+export const BlankShaderConfig : ShaderConfig = {
+    vertexShader : blankCanvasVertexShader,
+    fragmentShader: blankCanvasFragmentShader,
+    computeShader : ''
+}
+
+export const RaymarchShaderConfig : ShaderConfig = {
+    vertexShader: blankCanvasVertexShader,
+    fragmentShader: raymachCanvasFragmentShader,
     computeShader: ''
 };
 
+export const BlankParticleConfig : ShaderConfig = {
+    computeShader: blankParticleComputeShader,
+    vertexShader: blankParticleVertexShader,
+    fragmentShader: blankParticleFragmentShader,
+}
+
 export const ParticleShaderConfig: ShaderConfig = {
-    computeShader: defaultParticleCompute,
-    vertexShader: defaultParticleVertexCompute,
-    fragmentShader: defaultParticleFragmentCompute
+    computeShader: squareParticleCompute,
+    vertexShader: squareParticleVertexCompute,
+    fragmentShader: squareParticleFragmentCompute
 };
 
 export const GolShaderConfig: ShaderConfig = {

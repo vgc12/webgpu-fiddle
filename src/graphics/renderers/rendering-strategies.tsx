@@ -2,7 +2,7 @@
  * Strategy interfaces for different aspects of rendering
  * These allow different renderers to compose their behavior from reusable strategies
  */
-import type {UniformBuffer} from "@/graphics/input-output-buffers.tsx";
+import type {UniformBuffer} from "@/graphics/pipelines/input-output-buffers.tsx";
 
 export interface IPipelineStrategy {
     createPipelines(
