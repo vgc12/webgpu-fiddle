@@ -130,6 +130,29 @@ export function useShaderCompilation(
         setUserShaders(prev => ({...prev, [activeTabRef.current]: value}));
     }, []);
 
+    const handleUploadShaders = async (file: File) => {
+        const zip = await JSZip.loadAsync(file);
+        const updates: Partial<Record<tab_id, string>> = {};
+
+        for (const [filename, entry] of Object.entries(zip.files)) {
+            if (entry.dir) continue;
+            const name = filename.toLowerCase();
+            const content = await entry.async("string");
+
+            if (/vert/.test(name)) {
+                updates.vertex = content;
+            } else if (/frag/.test(name)) {
+                updates.fragment = content;
+            } else if (/compute/.test(name)) {
+                updates.compute = content;
+            }
+        }
+
+        if (Object.keys(updates).length > 0) {
+            setUserShaders(prev => ({...prev, ...updates}));
+        }
+    }
+
     const handleDownloadShaders = async () => {
         const zip = new JSZip();
         zip.file("vertex.wgsl", userShaders.vertex);
@@ -159,5 +182,6 @@ export function useShaderCompilation(
         handleCompileAndApply,
         handleEditorChange,
         handleDownloadShaders,
+        handleUploadShaders,
     };
 }

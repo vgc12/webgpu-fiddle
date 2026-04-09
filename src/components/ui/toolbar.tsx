@@ -1,15 +1,19 @@
 import {ButtonLightRectangle} from "@/components/ui/button.tsx";
 import {Sun, Moon} from "lucide-react";
 import type {dark_mode_props} from "@/types.tsx";
+import {useRef} from "react";
 
-export function Toolbar({templateName, darkMode, onCompile, onChangeTemplate, onChangeRenderSettings, onDownload}: {
+export function Toolbar({templateName, darkMode, onCompile, onChangeTemplate, onChangeRenderSettings, onDownload, onUpload}: {
     templateName: string;
     darkMode: dark_mode_props;
     onCompile: () => void;
     onChangeTemplate: () => void;
     onChangeRenderSettings: () => void;
     onDownload: () => void;
+    onUpload: (file: File) => void;
 }) {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     return (
         <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 shrink-0">
             <span className="text-sm font-semibold dark:text-white mr-2">{templateName}</span>
@@ -18,6 +22,18 @@ export function Toolbar({templateName, darkMode, onCompile, onChangeTemplate, on
             <ButtonLightRectangle onClick={onChangeTemplate}>Template</ButtonLightRectangle>
             <ButtonLightRectangle onClick={onChangeRenderSettings}>Settings</ButtonLightRectangle>
             <ButtonLightRectangle onClick={onDownload}>Download</ButtonLightRectangle>
+            <ButtonLightRectangle onClick={() => fileInputRef.current?.click()}>Upload</ButtonLightRectangle>
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept=".zip"
+                className="hidden"
+                onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) onUpload(file);
+                    e.target.value = "";
+                }}
+            />
             <div className="grow" />
             <button
                 onClick={() => darkMode.setIsDarkMode(!darkMode.isDarkMode)}

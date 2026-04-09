@@ -33,6 +33,7 @@ export function ShaderWorkspace({shaderType, shaderConfig, renderSettings, onCha
         handleCompileAndApply,
         handleEditorChange,
         handleDownloadShaders,
+        handleUploadShaders,
     } = useShaderCompilation(shaderConfig, shaderType, renderSettings, rendererRef);
 
     return (
@@ -44,6 +45,7 @@ export function ShaderWorkspace({shaderType, shaderConfig, renderSettings, onCha
                 onChangeTemplate={onChangeTemplate}
                 onChangeRenderSettings={onChangeRenderSettings}
                 onDownload={handleDownloadShaders}
+                onUpload={handleUploadShaders}
             />
 
             <SplitPane className="grow min-h-0 my-4 rounded-sm dark:bg-gray-800 bg-gray-100">
