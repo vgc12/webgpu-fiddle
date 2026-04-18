@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import {defineConfig} from 'vite';
 import string from 'vite-plugin-string';
 import react from '@vitejs/plugin-react';
@@ -32,6 +33,11 @@ export default defineConfig(({}) =>
 
     optimizeDeps: {
       include: ['react', 'react-dom', 'react-icons', 'react-icons/*', 'monaco-editor'],
+    },
+
+    test: {
+      globals: true,
+      include: ['src/**/*.test.{ts,tsx}'],
     }
   }
 });
