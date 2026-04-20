@@ -27,6 +27,7 @@ fn computeMain(@builtin(global_invocation_id) id: vec3<u32>) {
     let y = i32(id.y);
 
     // Count 8 neighbors
+
     let neighbors = getCell(x - 1, y - 1) + getCell(x, y - 1) + getCell(x + 1, y - 1)
                   + getCell(x - 1, y)                           + getCell(x + 1, y)
                   + getCell(x - 1, y + 1) + getCell(x, y + 1) + getCell(x + 1, y + 1);

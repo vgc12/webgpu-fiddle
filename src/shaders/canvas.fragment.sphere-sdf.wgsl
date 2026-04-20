@@ -23,28 +23,6 @@ fn sdfSphere(p:vec3f, radius:f32) -> f32
 {
     return length( p ) - radius;
 }
-fn sdCone(p: vec3f, a: vec3f, b: vec3f, ra: f32, rb: f32) -> f32 {
-    let rba = rb - ra;
-    let baba = dot(b - a, b - a);
-    let papa = dot(p - a, p - a);
-    let paba = dot(p - a, b - a) / baba;
-
-    let x = sqrt(papa - paba * paba * baba);
-
-    let cax = max(0.0, x - select(rb, ra, paba < 0.5));
-    let cay = abs(paba - 0.5) - 0.5;
-
-    let k = rba * rba + baba;
-    let f = clamp((rba * (x - ra) + paba * baba) / k, 0.0, 1.0);
-
-    let cbx = x - ra - f * rba;
-    let cby = paba - f;
-
-    let s = select(1.0, -1.0, cbx < 0.0 && cay < 0.0);
-
-    return s * sqrt(min(cax * cax + cay * cay * baba,
-                        cbx * cbx + cby * cby * baba));
-}
 
 fn sdfBox(p: vec3f, b: vec3f) -> f32 {
     let q = abs(p) - b;
@@ -53,8 +31,12 @@ fn sdfBox(p: vec3f, b: vec3f) -> f32 {
 
 fn scene(p: vec3f) -> f32 {
    // let capsule = sdCapsule(p, vec3f(0, -1, 0), vec3f(0, 1, 0), 0.5);
-    let cube = sdfBox(p - vec3f(0, 0, 5), vec3f(0.5));
-    return cube;
+    let q = fract(p / 2.0) * 2.0 - 1.0;
+    let cube = sdfBox(q, vec3f(0.5));
+    var capsule = sdCapsule(q,vec3f(-1,0,0),vec3f(1,0,0), .3f);
+    let capsule2 = sdCapsule(q,vec3f(0,0,-1), vec3f(0,0,1), .3f) ;
+    let capsule3 = sdCapsule(q,vec3f(0,-1,0), vec3f(0,1,0),.3f);
+    return smin(capsule3,smin(capsule2,smin(cube,capsule,.4f),.4f),.4f);
 }
 
 fn getNormal(p: vec3f) -> vec3f {
@@ -67,10 +49,15 @@ fn getNormal(p: vec3f) -> vec3f {
 }
 
 fn calcShading(p: vec3f) -> f32 {
-    let light_position = vec3f(10.0, 5.0, 0.0);
+    let light_radius = 3.0;
+    let light_position = vec3f(cos(time) * light_radius, 0.0, sin(time) * light_radius);
     let light_dir = normalize(light_position - p);
     let normal = getNormal(p);
-    return clamp(dot(normal, light_dir), 0.0, 1.0);
+    let diff = clamp(dot(normal, light_dir), 0.0, 1.0);
+    let dist = length(light_position - p);
+    let intensity = 1.6;
+    let attenuation = 1.0 / (1.0 + 0.1 * dist * dist);
+    return diff * attenuation * intensity;
 }
 
 
@@ -91,11 +78,9 @@ fn fragmentMain(
     var rd : vec3f = normalize(vec3f(uv*fov,1.));
     
     let r = rot2D(-m.y);
-    ro = vec3f(ro.x, r * ro.yz);
     rd = vec3f(rd.x, r * rd.yz);
-    
+
     let r2 = rot2D(m.x);
-    ro = vec3f(r2 * ro.xz, ro.y).xzy;
     rd = vec3f(r2 * rd.xz, rd.y).xzy;
 
     var col : vec3f = vec3f(0);
@@ -110,14 +95,14 @@ fn fragmentMain(
 
         let d : f32 = scene(p);
 
-        t += d;
-
         col = vec3f(f32(i))/80.;
         hit = d * d < 1e-6;
         if(d < .001 || t > 100.)
         {
             break;
         }
+
+        t += d;
     }
   
     col = vec3f(1,0,0);
