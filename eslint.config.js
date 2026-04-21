@@ -7,53 +7,59 @@ export default tseslint.config(
     ...tseslint.configs.recommended,
 
     {
-      languageOptions: {
-        parserOptions: {
-          project: './tsconfig.json',
+        languageOptions: {
+            parserOptions: {
+                project: './tsconfig.json',
+            },
         },
-      },
-      rules: {
-        '@typescript-eslint/naming-convention': [
-          'error',
-          {
-            selector: 'class',
-            format: ['PascalCase'],
-          },
-          {
-            selector: 'method',
-            format: ['camelCase'],
-          },
-          {
-            selector: 'property',
-            format: ['camelCase'],
-          },
-          {
-            selector: 'property',
-            modifiers: ['private'],
-            format: ['camelCase'],
-          },
-          {
-            selector: 'variable',
-            format: ['camelCase', 'UPPER_CASE'],
-          },
-          {
-            selector: 'variable',
-            modifiers: ['exported'],
-            format: ['PascalCase']
-          },
+        rules: {
+            '@typescript-eslint/no-explicit-any': 'off',
+            '@typescript-eslint/no-unused-vars': ['off', {argsIgnorePattern: '^_'}],
+            '@typescript-eslint/naming-convention': [
+                'error',
+                {
+                    selector: 'class',
+                    format: ['PascalCase'],
+                },
+                {
+                    selector: 'method',
+                    format: ['camelCase'],
+                },
+                {
+                    selector: 'property',
+                    format: ['camelCase'],
+                },
+                {
+                    selector: 'property',
+                    modifiers: ['private'],
+                    format: ['camelCase'],
+                },
+                {
+                    selector: "accessor",
+                    format: ["PascalCase"],
+                },
+                {
+                    selector: 'variable',
+                    format: ['camelCase', 'UPPER_CASE'],
+                },
+                {
+                    selector: 'variable',
+                    modifiers: ['exported'],
+                    format: ['PascalCase']
+                },
 
-          {
-            selector: 'typeAlias',
-            format: ['PascalCase'],
-          },
-          {
-            selector: 'property',
-            modifiers: ['readonly', 'static'],
-            format: ['UPPER_CASE']
-          }
+                {
+                    selector: 'typeAlias',
+                    format: ['snake_case'],
+                },
+                {
+                    selector: 'property',
+                    modifiers: ['readonly', 'static'],
+                    format: ['UPPER_CASE']
+                }
 
 
-        ],
-      },
+            ],
+        },
     }
 );
