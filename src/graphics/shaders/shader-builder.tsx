@@ -1,10 +1,11 @@
 ﻿import {TypeInfo} from "@/graphics/utils/type-info.tsx";
-import squareParticleCompute from '@/shaders/particle.compute.squares.wgsl';
-import squareParticleVertexCompute from '@/shaders/particle.vertex.squares.wgsl';
-import squareParticleFragmentCompute from '@/shaders/particle.fragment.squares.wgsl';
+import squareParticleCompute from '@/shaders/particle.compute.spheres.wgsl';
+import squareParticleVertexCompute from '@/shaders/particle.vertex.spheres.wgsl';
+import squareParticleFragmentCompute from '@/shaders/particle.fragment.spheres.wgsl';
 import blankCanvasVertexShader from '@/shaders/canvas.vertex.blank.wgsl';
 import blankCanvasFragmentShader from '@/shaders/canvas.fragment.blank.wgsl'
-import raymachCanvasFragmentShader from '@/shaders/canvas.fragment.sphere-sdf.wgsl';
+import raymachCanvasFragmentShader from '@/shaders/canvas.fragment.sdf.wgsl';
+import juliaFragmentShader from '@/shaders/canvas.fragment.julia.wgsl';
 import blankParticleComputeShader from '@/shaders/particle.compute.blank.wgsl';
 import blankParticleVertexShader from '@/shaders/particle.vertex.blank.wgsl';
 import blankParticleFragmentShader from '@/shaders/particle.fragment.blank.wgsl';
@@ -38,6 +39,12 @@ export const ParticleShaderConfig: ShaderConfig = {
     computeShader: squareParticleCompute,
     vertexShader: squareParticleVertexCompute,
     fragmentShader: squareParticleFragmentCompute
+};
+
+export const JuliaShaderConfig: ShaderConfig = {
+    vertexShader: blankCanvasVertexShader,
+    fragmentShader: juliaFragmentShader,
+    computeShader: ''
 };
 
 export const GolShaderConfig: ShaderConfig = {

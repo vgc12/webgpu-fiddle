@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-WebGPU shader editor and renderer — a browser-based tool for writing WGSL shaders with live preview. Users pick a
+WebGPU shader editor and renderer - a browser-based tool for writing WGSL shaders with live preview. Users pick a
 template, edit vertex/fragment/compute shaders in a Monaco editor, and see results rendered via WebGPU in real time.
 
 ## Commands
@@ -69,6 +69,10 @@ No test runner is configured.
 - Exported variables: `PascalCase`
 - Static readonly: `UPPER_CASE`
 - Local variables: `camelCase` or `UPPER_CASE`
+
+## Style
+
+- Never use em dashes (—) in code comments or text output. Use commas, periods, or parentheses instead.
 
 ## Notes
 

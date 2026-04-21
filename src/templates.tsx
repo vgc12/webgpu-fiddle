@@ -3,7 +3,8 @@ import {
     GolShaderConfig,
     ParticleShaderConfig,
     BlankShaderConfig,
-    BlankParticleConfig
+    BlankParticleConfig,
+    JuliaShaderConfig
 } from "@/graphics/shaders/shader-builder.tsx";
 import type {template_def} from "@/types.tsx";
 
@@ -20,6 +21,13 @@ export const TEMPLATES: template_def[] = [
         description: 'Full-screen vertex & fragment shader demonstrating ray marching',
         shaderType: 'canvas',
         shaderConfig: RaymarchShaderConfig,
+        defaultRenderSettings: {vertexDrawCount: 3, instanceCount: 1, initialData: null},
+    },
+    {
+        name: 'Julia Set',
+        description: 'Animated Julia set fractal with morphing c parameter',
+        shaderType: 'canvas',
+        shaderConfig: JuliaShaderConfig,
         defaultRenderSettings: {vertexDrawCount: 3, instanceCount: 1, initialData: null},
     },
     {
