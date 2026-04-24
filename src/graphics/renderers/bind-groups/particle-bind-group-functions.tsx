@@ -1,4 +1,4 @@
-﻿import type {InputOutputBuffers, UniformBuffer} from "@/graphics/pipelines/input-output-buffers.tsx";
+import type {InputOutputBuffers, UniformBuffer} from "@/graphics/pipelines/input-output-buffers.tsx";
 
 /**
  * Bind group configuration for particle rendering
@@ -108,4 +108,3 @@ export function createParticleComputeBindGroups(
 
     return [bindGroupA, bindGroupB];
 }
-

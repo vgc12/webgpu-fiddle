@@ -18,8 +18,9 @@ export function useShaderCompilation(
     shaderType: 'canvas' | 'particle',
     renderSettings: render_settings,
     rendererRef: React.RefObject<IRenderer | null>,
+    sharedShaders?: Record<tab_id, string>,
 ) {
-    const initialShaders = buildInitialShaders(shaderConfig, shaderType);
+    const initialShaders = sharedShaders ?? buildInitialShaders(shaderConfig, shaderType);
 
     const [activeTab, setActiveTab] = useState<tab_id>('vertex');
     const activeTabRef = useRef(activeTab);

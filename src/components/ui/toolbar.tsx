@@ -1,9 +1,9 @@
 import {ButtonLightRectangle} from "@/components/ui/button.tsx";
 import {Sun, Moon} from "lucide-react";
 import type {dark_mode_props} from "@/types.tsx";
-import {useRef} from "react";
+import {useRef, useState} from "react";
 
-export function Toolbar({templateName, darkMode, onCompile, onChangeTemplate, onChangeRenderSettings, onDownload, onUpload}: {
+export function Toolbar({templateName, darkMode, onCompile, onChangeTemplate, onChangeRenderSettings, onDownload, onUpload, onShare}: {
     templateName: string;
     darkMode: dark_mode_props;
     onCompile: () => void;
@@ -11,8 +11,10 @@ export function Toolbar({templateName, darkMode, onCompile, onChangeTemplate, on
     onChangeRenderSettings: () => void;
     onDownload: () => void;
     onUpload: (file: File) => void;
+    onShare: () => void;
 }) {
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [showCopied, setShowCopied] = useState(false);
 
     return (
         <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 shrink-0">
@@ -21,6 +23,11 @@ export function Toolbar({templateName, darkMode, onCompile, onChangeTemplate, on
             <ButtonLightRectangle onClick={onCompile}>Compile</ButtonLightRectangle>
             <ButtonLightRectangle onClick={onChangeTemplate}>Template</ButtonLightRectangle>
             <ButtonLightRectangle onClick={onChangeRenderSettings}>Settings</ButtonLightRectangle>
+            <ButtonLightRectangle onClick={() => {
+                onShare();
+                setShowCopied(true);
+                setTimeout(() => setShowCopied(false), 2000);
+            }}>{showCopied ? 'Copied!' : 'Share'}</ButtonLightRectangle>
             <ButtonLightRectangle onClick={onDownload}>Download</ButtonLightRectangle>
             <ButtonLightRectangle onClick={() => fileInputRef.current?.click()}>Upload</ButtonLightRectangle>
             <input

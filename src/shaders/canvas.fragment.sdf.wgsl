@@ -19,12 +19,12 @@ fn sdCapsule(p: vec3f, a: vec3f, b: vec3f, r: f32) -> f32 {
     let h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
     return length(pa - ba * h) - r;
 }
-fn sdfSphere(p:vec3f, radius:f32) -> f32
+fn sdSphere(p:vec3f, radius:f32) -> f32
 {
     return length( p ) - radius;
 }
 
-fn sdfBox(p: vec3f, b: vec3f) -> f32 {
+fn sdBox(p: vec3f, b: vec3f) -> f32 {
     let q = abs(p) - b;
     return length(max(q, vec3f(0.0))) + min(max(q.x, max(q.y, q.z)), 0.0);
 }
@@ -58,7 +58,7 @@ fn axisSphere(pAxis: f32, qAxis: f32, crossQ: vec2f, speedCell: vec3f, spawnSeed
     let r = rand3(vec3f(speedCell.x + movedCell, speedCell.y, speedCell.z) + spawnSeed);
     if (r < 0.3) { return vec2f(1e10, 0.0); }
 
-    return vec2f(sdfSphere(vec3f(crossQ.x, sq, crossQ.y), .4f), 1.0);
+    return vec2f(sdSphere(vec3f(crossQ.x, sq, crossQ.y), .4f), 1.0);
 }
 
 fn blendSphere(result: vec2f, sd: vec2f) -> vec2f {
@@ -71,7 +71,7 @@ fn blendSphere(result: vec2f, sd: vec2f) -> vec2f {
 // returns vec2f(distance, materialID) where 0=pipes, 1=sphere
 fn scene(p: vec3f) -> vec2f {
     let q = fract(p / 2.0) * 2.0 - 1.0;
-    var d = sdfBox(q, vec3f(0.5));
+    var d = sdBox(q, vec3f(0.5));
     d = smin(sdCapsule(q,vec3f(-1,0,0),vec3f(1,0,0),.3f), d, .4);
     d = smin(sdCapsule(q,vec3f(0,0,-1), vec3f(0,0,1), .3f), d, .4f);
     d = smin(sdCapsule(q,vec3f(0,-1,0), vec3f(0,1,0),.3f), d, .4f);

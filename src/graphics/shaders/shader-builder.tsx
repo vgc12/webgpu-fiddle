@@ -4,7 +4,7 @@ import squareParticleVertexCompute from '@/shaders/particle.vertex.spheres.wgsl'
 import squareParticleFragmentCompute from '@/shaders/particle.fragment.spheres.wgsl';
 import blankCanvasVertexShader from '@/shaders/canvas.vertex.blank.wgsl';
 import blankCanvasFragmentShader from '@/shaders/canvas.fragment.blank.wgsl'
-import raymachCanvasFragmentShader from '@/shaders/canvas.fragment.sdf.wgsl';
+import rayMarchCanvasFragmentShader from '@/shaders/canvas.fragment.sdf.wgsl';
 import juliaFragmentShader from '@/shaders/canvas.fragment.julia.wgsl';
 import blankParticleComputeShader from '@/shaders/particle.compute.blank.wgsl';
 import blankParticleVertexShader from '@/shaders/particle.vertex.blank.wgsl';
@@ -25,7 +25,7 @@ export const BlankShaderConfig : ShaderConfig = {
 
 export const RaymarchShaderConfig : ShaderConfig = {
     vertexShader: blankCanvasVertexShader,
-    fragmentShader: raymachCanvasFragmentShader,
+    fragmentShader: rayMarchCanvasFragmentShader,
     computeShader: ''
 };
 
@@ -62,8 +62,6 @@ export function getWorkgroupSize(computeShader: string): [number, number, number
         console.warn('No @workgroup_size found, using default [64, 1, 1]');
         return [64, 1, 1];
     }
-
-    //console.log('workgroup_size match:', match[0]);
 
     const x = parseInt(match[1]);
     const y = match[2] ? parseInt(match[2]) : 1;

@@ -5,13 +5,15 @@ import {MonacoEditor} from "@/components/editor/monaco-editor.tsx";
 import {WebGPUCanvas} from "@/components/ui/main-canvas.tsx";
 import {SplitPane} from "@/components/ui/split-pane.tsx";
 import {Toolbar} from "@/components/ui/toolbar.tsx";
-import type {dark_mode_props, render_settings} from "@/types.tsx";
+import type {dark_mode_props, render_settings, tab_id} from "@/types.tsx";
 import {useShaderCompilation} from "@/hooks/use-shader-compilation.tsx";
+import {encodeShareUrl} from "@/utils/shader-url-codec.tsx";
 
-export function ShaderWorkspace({shaderType, shaderConfig, renderSettings, onChangeRenderSettings, onChangeTemplate, templateName, darkMode}: {
+export function ShaderWorkspace({shaderType, shaderConfig, renderSettings, initialUserShaders, onChangeRenderSettings, onChangeTemplate, templateName, darkMode}: {
     shaderType: 'canvas' | 'particle'
     shaderConfig: ShaderConfig
     renderSettings: render_settings
+    initialUserShaders?: Record<tab_id, string> | null
     templateName: string
     onChangeTemplate: () => void;
     onChangeRenderSettings: () => void;
@@ -34,7 +36,7 @@ export function ShaderWorkspace({shaderType, shaderConfig, renderSettings, onCha
         handleEditorChange,
         handleDownloadShaders,
         handleUploadShaders,
-    } = useShaderCompilation(shaderConfig, shaderType, renderSettings, rendererRef);
+    } = useShaderCompilation(shaderConfig, shaderType, renderSettings, rendererRef, initialUserShaders ?? undefined);
 
     return (
         <div className="flex flex-col h-screen w-screen overflow-hidden px-2  bg-gray-50 dark:bg-gray-900 ">
@@ -46,6 +48,10 @@ export function ShaderWorkspace({shaderType, shaderConfig, renderSettings, onCha
                 onChangeRenderSettings={onChangeRenderSettings}
                 onDownload={handleDownloadShaders}
                 onUpload={handleUploadShaders}
+                onShare={() => {
+                    const url = encodeShareUrl(templateName, renderSettings, userShaders);
+                    navigator.clipboard.writeText(url);
+                }}
             />
 
             <SplitPane className="grow min-h-0 my-4 rounded-sm dark:bg-gray-800 bg-gray-100">

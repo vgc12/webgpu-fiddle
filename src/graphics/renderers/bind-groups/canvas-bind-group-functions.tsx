@@ -1,4 +1,4 @@
-﻿import type {UniformBuffer} from "@/graphics/pipelines/input-output-buffers.tsx";
+import type {UniformBuffer} from "@/graphics/pipelines/input-output-buffers.tsx";
 
 export interface CanvasBindGroupConfig {
     uniformBuffer: UniformBuffer;
