@@ -38,11 +38,11 @@ export const TEMPLATES: template_def[] = [
         defaultRenderSettings: {vertexDrawCount: 6, instanceCount: 2500, initialData: null}
     },
     {
-        name: 'Particle Simulation',
-        description: 'Compute + vertex/fragment particle pipeline',
+        name: 'Rain',
+        description: 'Compute-driven rain with mouse interaction',
         shaderType: 'particle',
         shaderConfig: ParticleShaderConfig,
-        defaultRenderSettings: {vertexDrawCount: 6, instanceCount: 2000, initialData: null},
+        defaultRenderSettings: {vertexDrawCount: 6, instanceCount: 5000, initialData: null},
     },
     {
         name: 'Game of Life',

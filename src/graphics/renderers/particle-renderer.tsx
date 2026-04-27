@@ -38,8 +38,17 @@ export class ParticleRenderer extends StrategyBasedRenderer {
         newShaderConfig: ShaderConfig,
         options?: { computeConfig?: Partial<ComputeConfig>, renderSettings?: Partial<render_settings> }
     ): Promise<void> {
-        if (options?.computeConfig) {
-            this.computeConfig = {...this.computeConfig, ...options.computeConfig};
+        const newConfig = options?.computeConfig;
+
+        // Only recreate buffers if the struct layout or particle count changed
+        const needsNewBuffers = newConfig && (
+            newConfig.particleCount !== this.computeConfig.particleCount ||
+            newConfig.inOutBufferStruct?.size !== this.computeConfig.inOutBufferStruct?.size ||
+            newConfig.initialData !== undefined
+        );
+
+        if (needsNewBuffers) {
+            this.computeConfig = {...this.computeConfig, ...newConfig};
 
             const resourceStrategy = new ParticleResourceStrategy(this.computeConfig, this.renderSettings.instanceCount);
             this.resourceStrategy = resourceStrategy;
@@ -49,6 +58,7 @@ export class ParticleRenderer extends StrategyBasedRenderer {
                 this.renderSettings.instanceCount
             );
             this.renderStrategy = new ParticleRenderStrategy();
+            this.initializeResources();
         }
 
         await super.recompileShaders(newShaderConfig);

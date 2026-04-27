@@ -31,8 +31,9 @@ export function useShaderCompilation(
     const [fullVertexShader, setFullVertexShader] = useState(injectUniformsIntoShader(initialShaders.vertex));
     const [fullFragmentShader, setFullFragmentShader] = useState(injectUniformsIntoShader(initialShaders.fragment));
     const [fullComputeShader, setFullComputeShader] = useState(injectUniformsIntoShader(initialShaders.compute));
+    const [fullBackgroundShader, setFullBackgroundShader] = useState(injectUniformsIntoShader(initialShaders.background ?? ''));
 
-    const emptyDiagnostics: Record<tab_id, shader_diagnostic[]> = {vertex: [], fragment: [], compute: []};
+    const emptyDiagnostics: Record<tab_id, shader_diagnostic[]> = {vertex: [], fragment: [], compute: [], background: []};
     const [diagnostics, setDiagnostics] = useState<Record<tab_id, shader_diagnostic[]>>(emptyDiagnostics);
 
     // Debounced live validation
@@ -62,9 +63,12 @@ export function useShaderCompilation(
         ];
         if (shaderType === 'particle') {
             tabArray.unshift({id: 'compute', label: 'Compute'});
+            if (userShaders.background) {
+                tabArray.push({id: 'background', label: 'Background'});
+            }
         }
         return tabArray;
-    }, [shaderType]);
+    }, [shaderType, userShaders.background]);
 
     function createComputeConfig(): ComputeConfig | undefined {
         if (userShaders.compute != '') {
@@ -84,26 +88,35 @@ export function useShaderCompilation(
         const newVertexShader = injectUniformsIntoShader(userShaders.vertex);
         const newFragmentShader = injectUniformsIntoShader(userShaders.fragment);
         const newComputeShader = injectUniformsIntoShader(userShaders.compute);
+        const newBackgroundShader = userShaders.background
+            ? injectUniformsIntoShader(userShaders.background)
+            : { code: '', prefixLineCount: 0, injections: [] };
 
         const device = rendererRef.current?.device;
         if (!device) return;
 
-        const [vertexDiags, fragmentDiags, computeDiags] = await Promise.all([
+        const validations = [
             validateShader(device, userShaders.vertex, newVertexShader.code, 'vertex', newVertexShader.prefixLineCount, newVertexShader.injections),
-            validateShader(device, userShaders.fragment, newFragmentShader.code, 'fragment', newVertexShader.prefixLineCount, newComputeShader.injections),
+            validateShader(device, userShaders.fragment, newFragmentShader.code, 'fragment', newFragmentShader.prefixLineCount, newFragmentShader.injections),
             userShaders.compute
                 ? validateShader(device, userShaders.compute, newComputeShader.code, 'compute', newComputeShader.prefixLineCount, newComputeShader.injections)
                 : Promise.resolve([]),
-        ]);
+            userShaders.background
+                ? validateShader(device, userShaders.background, newBackgroundShader.code, 'background', newBackgroundShader.prefixLineCount, newBackgroundShader.injections)
+                : Promise.resolve([]),
+        ];
+
+        const [vertexDiags, fragmentDiags, computeDiags, backgroundDiags] = await Promise.all(validations);
 
         const newDiagnostics: Record<tab_id, shader_diagnostic[]> = {
             vertex: vertexDiags,
             fragment: fragmentDiags,
             compute: computeDiags,
+            background: backgroundDiags,
         };
         setDiagnostics(newDiagnostics);
 
-        const hasErrors = [...vertexDiags, ...fragmentDiags, ...computeDiags]
+        const hasErrors = [...vertexDiags, ...fragmentDiags, ...computeDiags, ...backgroundDiags]
             .some(d => d.severity === 'error');
 
         if (hasErrors) return;
@@ -113,6 +126,7 @@ export function useShaderCompilation(
         setFullVertexShader(newVertexShader);
         setFullFragmentShader(newFragmentShader);
         setFullComputeShader(newComputeShader);
+        setFullBackgroundShader(newBackgroundShader);
 
         if (rendererRef.current) {
             try {
@@ -120,7 +134,8 @@ export function useShaderCompilation(
                     computeShader: newComputeShader.code,
                     vertexShader: newVertexShader.code,
                     fragmentShader: newFragmentShader.code,
-                }, options);
+                    backgroundShader: newBackgroundShader.code || undefined,
+                }, options ? { computeConfig: options } : undefined);
             } catch (error) {
                 console.error('Failed to recompile shaders:', error);
             }
@@ -140,7 +155,9 @@ export function useShaderCompilation(
             const name = filename.toLowerCase();
             const content = await entry.async("string");
 
-            if (/vert/.test(name)) {
+            if (/background/.test(name)) {
+                updates.background = content;
+            } else if (/vert/.test(name)) {
                 updates.vertex = content;
             } else if (/frag/.test(name)) {
                 updates.fragment = content;
@@ -161,6 +178,9 @@ export function useShaderCompilation(
         if (shaderType === 'particle' && userShaders.compute) {
             zip.file("compute.wgsl", userShaders.compute);
         }
+        if (userShaders.background) {
+            zip.file("background.wgsl", userShaders.background);
+        }
         const blob = await zip.generateAsync({type: "blob"});
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -177,6 +197,7 @@ export function useShaderCompilation(
         fullVertexShader,
         fullFragmentShader,
         fullComputeShader,
+        fullBackgroundShader,
         diagnostics,
         computeConfig,
         getTabs,

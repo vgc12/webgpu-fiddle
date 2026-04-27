@@ -1,7 +1,8 @@
 import { defineConfig } from 'vitepress'
+import { withMermaid } from 'vitepress-plugin-mermaid'
 
 // https://vitepress.dev/reference/site-config
-export default defineConfig({
+export default withMermaid(defineConfig({
   title: "WebGPU-Fiddle",
   description: "A tool for creating WGSL shaders in the browser.",
   markdown: {
@@ -21,6 +22,7 @@ export default defineConfig({
         text: 'Guide',
         items: [
           { text: 'Getting Started', link: '/guide/getting-started' },
+          { text: 'Architecture', link: '/guide/architecture' },
           { text: 'Templates', link: '/guide/templates' },
           { text: 'Shader System', link: '/guide/shader-system' },
         ],
@@ -33,4 +35,4 @@ export default defineConfig({
       },
     ],
   },
-})
+}))

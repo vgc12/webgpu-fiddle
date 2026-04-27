@@ -9,6 +9,7 @@ interface Shaders {
     computeShader: string;
     vertexShader: string;
     fragmentShader: string;
+    backgroundShader?: string;
 }
 
 interface WebGPUCanvasProps {
@@ -17,6 +18,7 @@ interface WebGPUCanvasProps {
     vertexShader?: string;
     shaderType?: 'canvas' | 'particle';
     fragmentShader?: string;
+    backgroundShader?: string;
     computeConfig?: ComputeConfig | null;
     renderSettings: render_settings;
 }
@@ -71,6 +73,7 @@ export const WebGPUCanvas: React.FC<WebGPUCanvasProps> = ({
                                                               computeShader = '',
                                                               vertexShader = '',
                                                               fragmentShader = '',
+                                                              backgroundShader,
                                                               shaderType = 'canvas',
                                                               computeConfig = null,
                                                               renderSettings,
@@ -92,7 +95,7 @@ export const WebGPUCanvas: React.FC<WebGPUCanvasProps> = ({
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
 
-        const shaders: Shaders = {computeShader, vertexShader, fragmentShader};
+        const shaders: Shaders = {computeShader, vertexShader, fragmentShader, backgroundShader};
         const size = {width: canvas.width, height: canvas.height};
 
         const renderer = createRenderer(canvas, shaders, renderSettings, shaderType, computeConfig, size);

@@ -14,12 +14,13 @@ function generateUniformDocumentation() {
         '// resolution: vec2<f32> - The resolution of the output (width, height)',
         '// mousePosition: vec2<f32> - The position of the mouse (width, height)',
         '// aspectRatio: f32 - The aspect ratio of the output (width / height)',
-        '// time: f32 - The elapsed time in seconds since the start of the program'
+        '// time: f32 - The elapsed time in seconds since the start of the program',
+        '// deltaTime: f32 - The time in seconds since the previous frame'
     ];
     return lines.join('\n');
 }
 
-export function generateVariableDocumentation(shaderType: 'compute' | 'vertex' | 'fragment', renderType: 'canvas' | 'particle'): string {
+export function generateVariableDocumentation(shaderType: 'compute' | 'vertex' | 'fragment' | 'background', renderType: 'canvas' | 'particle'): string {
     const lines: string[] = ['// Available variables in your main() function:'];
 
     if (shaderType === 'compute') {
@@ -35,8 +36,7 @@ export function generateVariableDocumentation(shaderType: 'compute' | 'vertex' |
         }
         lines.push('// output: VertexOutput - Set output.position and output.color');
     }
-    else if (shaderType === 'fragment') {
-        lines.push('// color: vec4<f32> - Input color from vertex shader');
+    else if (shaderType === 'fragment' || shaderType === 'background') {
         lines.push('// fragCoord: vec4<f32> - Fragment coordinates');
         lines.push('// Return: vec4<f32> - Output color for this fragment');
     }

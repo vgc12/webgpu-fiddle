@@ -14,7 +14,7 @@ export interface IPipelineStrategy {
         resourceManager: GPUResourceManager,
         shaderConfig: ShaderConfig,
         context: PipelineContext
-    ): Promise<{ compute?: GPUComputePipeline; render: GPURenderPipeline }>;
+    ): Promise<{ compute?: GPUComputePipeline; render: GPURenderPipeline; background?: GPURenderPipeline }>;
 }
 
 export interface IResourceStrategy {
@@ -30,7 +30,7 @@ export interface IResourceStrategy {
 
     getPipelineContext(format: GPUTextureFormat): PipelineContext;
 
-    get BindGroups(): { compute?: GPUBindGroup[]; render: GPUBindGroup[] };
+    get BindGroups(): { compute?: GPUBindGroup[]; render: GPUBindGroup[]; background?: GPUBindGroup[] };
 
     get UniformBuffer(): UniformBuffer;
 }
@@ -51,5 +51,6 @@ export interface IRenderStrategy {
         bindGroup: GPUBindGroup,
         drawCount: number,
         instanceCount: number,
+        background?: { pipeline: GPURenderPipeline; bindGroup: GPUBindGroup },
     ): void;
 }

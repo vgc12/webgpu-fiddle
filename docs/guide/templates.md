@@ -20,7 +20,7 @@ Particle templates add a **compute shader** on top of the vertex and fragment st
 
 Each particle is an instance. The vertex shader reads particle data from the input buffer and positions geometry for each instance. The fragment shader colors it.
 
-**Editor tabs:** Compute, Vertex, Fragment
+**Editor tabs:** Compute, Vertex, Fragment, Background (when a background shader is present)
 
 ## Built-in Templates
 
@@ -227,79 +227,55 @@ The fragment shader simply passes through the color from the vertex shader. This
 
 ---
 
-### Particle Simulation
+### Rain
 
 - **Shader type:** Particle
-- **Default particle count:** 2,000
+- **Default particle count:** 5,000
 - **Particle struct:** `position: vec2<f32>, velocity: vec2<f32>`
-- **Use case:** Physics simulations, interactive demos
+- **Use case:** Weather effects, interactive demos
 
-A physics-based particle system with gravity, collisions, wall bouncing, and mouse interaction. Particles are rendered as lit 3D spheres.
+A rain simulation with depth-layered drops, mouse repulsion, and streaked rendering. Particles fall at varying speeds depending on their depth layer and are pushed away by the cursor.
 
-#### Compute Shader: Physics
+#### Compute Shader: Rain Physics
 
-The compute shader simulates each particle's physics every frame. It processes several forces in order:
-
-**1. Inter-particle collisions**
-
-Each particle checks against every other particle for overlap:
+The compute shader simulates each raindrop every frame. Each particle gets deterministic random properties seeded by its index using a hash function:
 
 ```wgsl
-let diff = particle.position - other.position;
-let dist2 = dot(diff, diff);
-if (dist2 < minDist * minDist && dist2 > 1e-8) { ... }
+let r1 = hash(index * 3u + 1u);   // fall speed variation
+let r2 = hash(index * 7u + 3u);   // horizontal drift
+let r3 = hash(index * 13u + 5u);  // depth layer
 ```
 
-Using `dot(diff, diff)` (squared distance) avoids an expensive `sqrt` for the initial check. When particles overlap, two corrections are applied: a position correction pushes them apart, and a velocity correction reflects their relative velocity along the collision normal. The `restitution` factor (0.8) means collisions are slightly inelastic, so energy is lost over time.
+**Depth layers:** Each particle has a depth layer between 0.3 (far/slow) and 1.0 (close/fast). This affects fall speed, streak size, and brightness, creating a parallax depth effect.
 
-**2. Mouse repulsion**
+**Fall velocity:** Particles fall with a base speed scaled by their depth layer, plus slight horizontal drift to simulate wind. The velocity uses `mix()` to smoothly approach the target, giving inertia after mouse interaction.
 
-The mouse position is converted from pixel coordinates to the 0-1 space the particles use. The Y axis is flipped (`1.0 - mousePosition.y / resolution.y`) because screen coordinates go top-down but the simulation's Y axis goes bottom-up. Particles within a radius of the mouse are pushed away with a force proportional to how close they are.
+**Mouse repulsion:** The mouse position is converted to normalized coordinates. Particles within a radius of the cursor are pushed away with a force proportional to proximity, scaled by the depth layer so closer particles react more strongly.
 
-**3. Gravity and integration**
+**Respawn:** When a particle falls below the bottom edge, it respawns above the top with a randomized x position and staggered y offset (to avoid visible horizontal lines of simultaneous respawns). Horizontal wrapping keeps particles on screen.
+
+**Delta time:** The shader uses the `deltaTime` uniform for frame-rate-independent simulation.
+
+#### Vertex Shader: Streaked Drops
+
+Each raindrop is rendered as an elongated quad aligned with its velocity direction:
 
 ```wgsl
-particle.velocity += gravity * dt;
-particle.position += particle.velocity * dt;
+let streakLen = max(speed * 50.0, 4.0) * layer;
 ```
 
-This is Euler integration: velocity is updated by acceleration, then position is updated by velocity. The fixed timestep (`dt = 0.016`, roughly 60fps) keeps the simulation speed consistent.
+The streak length scales with speed and depth layer, so faster/closer drops appear as longer streaks. The quad's local x-axis is the perpendicular direction (width) and y-axis is the velocity direction (length). The vertex shader uses the same hash function as the compute shader to determine each particle's depth layer, ensuring size and brightness match speed.
 
-**4. Wall bouncing**
+#### Fragment Shader: Soft Fade
 
-If a particle goes past the boundary, it is clamped to the edge and its velocity component is reflected and damped by the restitution factor.
-
-#### Vertex Shader: Sphere Imposters
-
-Instead of rendering actual 3D sphere meshes, each particle draws a flat quad with a UV coordinate (`quadUV`) that the fragment shader uses to fake a sphere. The quad is positioned in pixel space and sized to 15 pixels:
+The fragment shader applies a soft tapered fade using smoothstep:
 
 ```wgsl
-let sizeInPixels = 15.0;
-let posInPixels = particlePos * uniforms.resolution;
-let offsetInPixels = squareArray[vertexIndex] * sizeInPixels;
+let fadeX = 1.0 - smoothstep(0.3, 1.0, abs(quadUV.x));
+let fadeY = 1.0 - smoothstep(0.4, 1.0, abs(quadUV.y));
 ```
 
-The color encodes the particle's position (red = x, green = y) and speed (blue = velocity magnitude), creating a color gradient across the simulation.
-
-#### Fragment Shader: Sphere Shading
-
-The fragment shader turns flat quads into 3D-looking spheres:
-
-```wgsl
-let d = length(quadUV);
-if (d > 1.0) { discard; }
-```
-
-First, pixels outside the unit circle are discarded, turning the square quad into a circle. Then a normal is reconstructed as if the circle were a hemisphere:
-
-```wgsl
-let normal = vec3f(quadUV, sqrt(1.0 - d * d));
-```
-
-The `quadUV` gives the x and y components, and `sqrt(1 - d^2)` gives the z component from the sphere equation `x^2 + y^2 + z^2 = 1`. This normal is used for:
-
-- **Diffuse lighting**: `dot(normal, lightDirection)` gives Lambertian shading.
-- **Rim lighting**: `pow(1.0 - normal.z, 3.0)` brightens the edges of the sphere, simulating light wrapping around the silhouette.
+This creates thin streaks with tapered tips. Since alpha blending is not available, the color is multiplied by the fade value (pre-multiplied alpha technique), which looks identical to transparency on a black background.
 
 ---
 
@@ -379,7 +355,7 @@ A template is defined by four things:
 | Field | Description |
 |---|---|
 | `shaderType` | `"canvas"` or `"particle"`, determines which renderer is used |
-| `shaderConfig` | The default source code for each shader stage (vertex, fragment, compute) |
+| `shaderConfig` | The default source code for each shader stage (vertex, fragment, compute, and optional background) |
 | `defaultRenderSettings` | Vertex draw count, instance count, and optional initial data |
 | `name` / `description` | Display name and description shown in the template selector |
 

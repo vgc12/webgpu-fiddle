@@ -26,8 +26,6 @@ export class CanvasRenderer extends StrategyBasedRenderer {
     }
 
     async recompileShaders(newShaderConfig: ShaderConfig): Promise<void> {
-        this.resourceStrategy = new CanvasResourceStrategy();
-        this.renderStrategy = new CanvasRenderStrategy();
         await super.recompileShaders(newShaderConfig);
     }
 }

@@ -29,6 +29,7 @@ export function ShaderWorkspace({shaderType, shaderConfig, renderSettings, initi
         fullVertexShader,
         fullFragmentShader,
         fullComputeShader,
+        fullBackgroundShader,
         diagnostics,
         computeConfig,
         getTabs,
@@ -61,7 +62,8 @@ export function ShaderWorkspace({shaderType, shaderConfig, renderSettings, initi
                                       shaderType={shaderType}
                                       computeShader={fullComputeShader.code}
                                       fragmentShader={fullFragmentShader.code}
-                                      vertexShader={fullVertexShader.code} />
+                                      vertexShader={fullVertexShader.code}
+                                      backgroundShader={fullBackgroundShader.code || undefined} />
                     </div>
                 </div>
                 <div className="flex flex-col h-full p-2">

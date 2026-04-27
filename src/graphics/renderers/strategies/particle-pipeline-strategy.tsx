@@ -3,6 +3,8 @@ import type {GPUResourceManager} from "@/graphics/gpu-resource-manager.tsx";
 import type {ShaderConfig} from "@/graphics/shaders/shader-config.tsx";
 import {ComputePipelineBuilder} from "@/graphics/pipelines/compute-pipeline-builder.tsx";
 import {RenderPipelineBuilder} from "@/graphics/pipelines/render-pipeline-builder.tsx";
+import canvasVertexShader from '@/shaders/canvas.vertex.blank.wgsl';
+import {injectUniformsIntoShader} from "@/graphics/shaders/shader-builder.tsx";
 
 export class ParticlePipelineStrategy implements IPipelineStrategy {
     async createPipelines(
@@ -10,7 +12,7 @@ export class ParticlePipelineStrategy implements IPipelineStrategy {
         resourceManager: GPUResourceManager,
         shaderConfig: ShaderConfig,
         context: PipelineContext
-    ): Promise<{ compute: GPUComputePipeline; render: GPURenderPipeline }> {
+    ): Promise<{ compute: GPUComputePipeline; render: GPURenderPipeline; background?: GPURenderPipeline }> {
         const computeShaderModule = resourceManager.createShaderModule(
             shaderConfig.computeShader,
             'Particle Update Shader'
@@ -46,6 +48,41 @@ export class ParticlePipelineStrategy implements IPipelineStrategy {
             .setTopology('triangle-list')
             .buildAsync();
 
-        return {compute, render};
+        // Build background pipeline if a background shader is provided
+        let background: GPURenderPipeline | undefined;
+        if (shaderConfig.backgroundShader) {
+            const bgVertexModule = resourceManager.createShaderModule(
+                injectUniformsIntoShader(canvasVertexShader).code,
+                'Background Vertex Shader'
+            );
+            const bgFragmentModule = resourceManager.createShaderModule(
+                shaderConfig.backgroundShader,
+                'Background Fragment Shader'
+            );
+
+            // Background pass uses the canvas bind group layout (uniform-only)
+            const bgLayout = device.createBindGroupLayout({
+                label: 'Background Render Layout',
+                entries: [{
+                    binding: 0,
+                    visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+                    buffer: {type: 'uniform'}
+                }]
+            });
+            const bgPipelineLayout = device.createPipelineLayout({
+                bindGroupLayouts: [bgLayout]
+            });
+
+            background = await new RenderPipelineBuilder(device, context.format)
+                .setVertexShaderModule(bgVertexModule)
+                .setFragmentShaderModule(bgFragmentModule)
+                .setLayout(bgPipelineLayout)
+                .setVertexEntryPoint('vertexMain')
+                .setFragmentEntryPoint('fragmentMain')
+                .setTopology('triangle-list')
+                .buildAsync();
+        }
+
+        return {compute, render, background};
     }
 }

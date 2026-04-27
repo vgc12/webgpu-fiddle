@@ -21,6 +21,7 @@ struct Uniforms {
     mousePosition: vec2f,
     aspectRatio: f32,
     time: f32,
+    deltaTime: f32,
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -29,6 +30,7 @@ var<private> resolution: vec2f;
 var<private> mousePosition: vec2f;
 var<private> aspectRatio: f32;
 var<private> time: f32;
+var<private> deltaTime: f32;
 ```
 
 The `var<private>` declarations are module-scope copies of the uniform values. They exist so you can write `resolution` instead of `uniforms.resolution` in your code.
@@ -40,6 +42,7 @@ resolution = uniforms.resolution;
 mousePosition = uniforms.mousePosition;
 aspectRatio = uniforms.aspectRatio;
 time = uniforms.time;
+deltaTime = uniforms.deltaTime;
 ```
 
 So if you write:
@@ -70,7 +73,7 @@ fn fragmentMain(@builtin(position) pos: vec4f) -> @location(0) vec4f {
 ### What this means for you
 
 - **Do not** declare your own `Uniforms` struct or `@group(0) @binding(0)` binding. It will conflict with the injected one.
-- **Do not** declare `var<private>` variables named `resolution`, `mousePosition`, `aspectRatio`, or `time`. They are already declared.
+- **Do not** declare `var<private>` variables named `resolution`, `mousePosition`, `aspectRatio`, `time`, or `deltaTime`. They are already declared.
 - You **can** access the struct directly as `uniforms.resolution` if you prefer, but the shorthand variables are available in any entry point.
 - For particle templates, `@binding(1)` and `@binding(2)` are reserved for the input and output storage buffers.
 
@@ -78,7 +81,7 @@ fn fragmentMain(@builtin(position) pos: vec4f) -> @location(0) vec4f {
 
 When you press `Ctrl+Enter` (or click Compile), the following happens:
 
-1. **Injection** - `injectUniformsIntoShader()` is called on each shader stage (vertex, fragment, compute). This prepends the uniform block and injects the assignment statements into every entry point.
+1. **Injection** - `injectUniformsIntoShader()` is called on each shader stage (vertex, fragment, compute, and background if present). This prepends the uniform block and injects the assignment statements into every entry point.
 
 2. **Validation** - Each shader is compiled via `device.createShaderModule()` and `getCompilationInfo()` is called to check for errors. If any errors are found, they are displayed in the editor and compilation stops.
 
@@ -147,7 +150,9 @@ Particle vertex shaders also show `particlePos` and `particleVel`.
 // Return: vec4<f32> - Output color for this fragment
 ```
 
-All stages include the uniform variable documentation (resolution, mousePosition, aspectRatio, time).
+**Background shaders** (particle templates only) show the same variables as fragment shaders.
+
+All stages include the uniform variable documentation (resolution, mousePosition, aspectRatio, time, deltaTime).
 
 ## Download and Upload
 
@@ -157,5 +162,6 @@ You can export and import your shaders as `.zip` files using the toolbar buttons
 - `vertex.wgsl`
 - `fragment.wgsl`
 - `compute.wgsl` (particle templates only)
+- `background.wgsl` (particle templates with a background shader)
 
-**Upload** accepts a zip file and matches filenames by keyword. Any file with `vert` in the name loads as the vertex shader, `frag` as fragment, and `compute` as compute. This is case-insensitive, so `myVertexShader.wgsl` or `VERT.txt` would both match.
+**Upload** accepts a zip file and matches filenames by keyword. Any file with `vert` in the name loads as the vertex shader, `frag` as fragment, `compute` as compute, and `background` as the background shader. This is case-insensitive, so `myVertexShader.wgsl` or `VERT.txt` would both match.

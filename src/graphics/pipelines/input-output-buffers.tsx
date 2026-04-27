@@ -22,7 +22,7 @@ export class UniformBuffer implements IBufferSystem {
 
     initializeBuffers(): void {
         const usage: number = GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
-        this.uniformBuffer = this.resourceManager.createBuffer(24, usage, "Uniform Buffer")
+        this.uniformBuffer = this.resourceManager.createBuffer(32, usage, "Uniform Buffer")
     }
 
     writeBuffer(data: Float32Array<ArrayBuffer>) {

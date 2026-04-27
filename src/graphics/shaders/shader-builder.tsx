@@ -1,7 +1,7 @@
 ﻿import {TypeInfo} from "@/graphics/utils/type-info.tsx";
-import squareParticleCompute from '@/shaders/particle.compute.spheres.wgsl';
-import squareParticleVertexCompute from '@/shaders/particle.vertex.spheres.wgsl';
-import squareParticleFragmentCompute from '@/shaders/particle.fragment.spheres.wgsl';
+import squareParticleCompute from '@/shaders/particle.compute.rain.wgsl';
+import squareParticleVertexCompute from '@/shaders/particle.vertex.rain.wgsl';
+import squareParticleFragmentCompute from '@/shaders/particle.fragment.rain.wgsl';
 import blankCanvasVertexShader from '@/shaders/canvas.vertex.blank.wgsl';
 import blankCanvasFragmentShader from '@/shaders/canvas.fragment.blank.wgsl'
 import rayMarchCanvasFragmentShader from '@/shaders/canvas.fragment.sdf.wgsl';
@@ -13,6 +13,7 @@ import blankParticleFragmentShader from '@/shaders/particle.fragment.blank.wgsl'
 import golCompute from '@/shaders/particle.compute.gol.wgsl';
 import golVertex from '@/shaders/particle.vertex.gol.wgsl';
 import golFragment from '@/shaders/particle.fragment.gol.wgsl';
+import defaultBackgroundShader from '@/shaders/particle.background.default.wgsl';
 
 import uniformStruct from '@/shaders/uniforms.wgsl';
 import type {ShaderConfig} from "@/graphics/shaders/shader-config.tsx";
@@ -33,12 +34,14 @@ export const BlankParticleConfig : ShaderConfig = {
     computeShader: blankParticleComputeShader,
     vertexShader: blankParticleVertexShader,
     fragmentShader: blankParticleFragmentShader,
+    backgroundShader: defaultBackgroundShader,
 }
 
 export const ParticleShaderConfig: ShaderConfig = {
     computeShader: squareParticleCompute,
     vertexShader: squareParticleVertexCompute,
-    fragmentShader: squareParticleFragmentCompute
+    fragmentShader: squareParticleFragmentCompute,
+    backgroundShader: defaultBackgroundShader,
 };
 
 export const JuliaShaderConfig: ShaderConfig = {
@@ -50,7 +53,8 @@ export const JuliaShaderConfig: ShaderConfig = {
 export const GolShaderConfig: ShaderConfig = {
     computeShader: golCompute,
     vertexShader: golVertex,
-    fragmentShader: golFragment
+    fragmentShader: golFragment,
+    backgroundShader: defaultBackgroundShader,
 };
 
 export function getWorkgroupSize(computeShader: string): [number, number, number] {
@@ -80,7 +84,8 @@ export function injectUniformsIntoShader(wgslCode: string): { code: string; pref
     resolution = uniforms.resolution;
     mousePosition = uniforms.mousePosition;
     aspectRatio = uniforms.aspectRatio;
-    time = uniforms.time;`;
+    time = uniforms.time;
+    deltaTime = uniforms.deltaTime;`;
     const defsLineCount = uniformDefs.split('\n').length - 1;
 
     const functionRegex = /(@(?:compute|vertex|fragment)[^\n]*\n\s*fn\s+\w+\s*\([^)]*\)[^{]*{)/g;

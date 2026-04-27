@@ -15,14 +15,14 @@ export class Time {
     start() {
 
         this.reset()
-        this.update();
+        this.lastFrameTime = performance.now() / 1000;
         this.animationFrameId = requestAnimationFrame(this.update)
 
     }
 
     reset() {
         this.deltaTime = 0;
-        this.lastFrameTime = 0;
+        this.lastFrameTime = performance.now() / 1000;
         this.totalTime = 0;
     }
 

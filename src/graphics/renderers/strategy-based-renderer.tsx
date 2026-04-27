@@ -4,7 +4,7 @@ import {BaseWebGPURenderer} from "@/graphics/renderers/base-web-gpu-renderer.tsx
 import type {render_settings} from "@/types.tsx";
 
 export class StrategyBasedRenderer extends BaseWebGPURenderer {
-    protected pipelines: { compute?: GPUComputePipeline; render: GPURenderPipeline };
+    protected pipelines: { compute?: GPUComputePipeline; render: GPURenderPipeline; background?: GPURenderPipeline };
     protected mousePosition = {x: 1, y: 1};
 
     handleMouseMove = (e: { clientX: number; clientY: number; }) => {
@@ -12,8 +12,9 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
             return;
         }
         const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const dpr = window.devicePixelRatio || 1;
+        const x = (e.clientX - rect.left) * dpr;
+        const y = (e.clientY - rect.top) * dpr;
         this.mousePosition = {x, y};
     };
 
@@ -33,9 +34,7 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
 
     async recompileShaders(newShaderConfig: ShaderConfig): Promise<void> {
         this.shaderConfig = newShaderConfig;
-        this.initializeResources();
         await this.createPipelines();
-        this.time.reset();
     }
 
     protected initializeResources(): void {
@@ -75,6 +74,10 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
             this.updateStrategy.update(encoder, this.pipelines.compute, bindGroups.compute);
         }
 
+        const bgInfo = this.pipelines.background && bindGroups.background
+            ? { pipeline: this.pipelines.background, bindGroup: bindGroups.background[0] }
+            : undefined;
+
         this.renderStrategy.render(
             encoder,
             textureView,
@@ -82,6 +85,7 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
             bindGroups.render[0],
             this.renderSettings.vertexDrawCount,
             this.renderSettings.instanceCount,
+            bgInfo,
         );
 
         device.queue.submit([encoder.finish()]);
@@ -94,7 +98,9 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
             this.mousePosition.x,
             this.mousePosition.y,
             this.resolution.width / this.resolution.height,
-            this.time.TotalTime
+            this.time.TotalTime,
+            this.time.DeltaTime,
+            0, // padding to 32 bytes (struct alignment)
         ]);
 
         this.resourceStrategy.UniformBuffer.writeBuffer(uniformData);

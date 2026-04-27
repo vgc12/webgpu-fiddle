@@ -37,10 +37,10 @@ When you first open the app, you'll see the **Template Selector**. Pick a templa
 | **Canvas SDF** | Ray marched signed distance field demo |
 | **Julia Set** | Animated Julia set fractal |
 | **Blank Particle** | Empty particle template with input/output buffers |
-| **Particle Simulation** | Compute-driven particle system |
+| **Rain** | Compute-driven rain simulation with mouse interaction |
 | **Game of Life** | Conway's Game of Life via compute shader |
 
-**Canvas** templates use vertex and fragment shaders only. **Particle** templates add a compute shader stage for GPU-driven simulation with ping-pong double buffering.
+**Canvas** templates use vertex and fragment shaders only. **Particle** templates add a compute shader stage for GPU-driven simulation with ping-pong double buffering, and an optional background shader for rendering behind the particles.
 
 ## The Workspace
 
@@ -86,6 +86,7 @@ The following uniforms are automatically injected into every shader. You can use
 | `mousePosition` | `vec2f` | Current mouse position in pixels |
 | `aspectRatio` | `f32` | Canvas width divided by height |
 | `time` | `f32` | Elapsed time in seconds |
+| `deltaTime` | `f32` | Seconds elapsed since the previous frame |
 
 ## Render Settings
 
@@ -98,5 +99,5 @@ Click **Settings** in the toolbar to adjust:
 ## Next Steps
 
 - Try the **Canvas SDF** template to explore ray marching techniques.
-- Open the **Particle Simulation** template to see how compute shaders drive particle movement.
+- Open the **Rain** template to see how compute shaders drive particle simulation with mouse interaction.
 - Experiment with the **Game of Life** template to learn about cellular automata on the GPU.

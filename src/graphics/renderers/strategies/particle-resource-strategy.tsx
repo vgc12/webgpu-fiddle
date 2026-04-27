@@ -24,6 +24,7 @@ export class ParticleResourceStrategy implements IResourceStrategy {
     private computeBindGroupB: GPUBindGroup;
     private renderLayout: GPUBindGroupLayout;
     private computeLayout: GPUBindGroupLayout;
+    private backgroundBindGroup: GPUBindGroup;
 
     constructor(private computeConfig: ComputeConfig, private particleCount: number) {
     }
@@ -50,6 +51,23 @@ export class ParticleResourceStrategy implements IResourceStrategy {
         this.renderBindGroup = createParticleRenderBindGroup(
             bufferRefs, this.renderLayout
         );
+
+        // Background bind group: only needs the uniform buffer
+        const bgLayout = device.createBindGroupLayout({
+            label: 'Background Render Layout',
+            entries: [{
+                binding: 0,
+                visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+                buffer: {type: 'uniform'}
+            }]
+        });
+        this.backgroundBindGroup = device.createBindGroup({
+            label: 'Background Bind Group',
+            layout: bgLayout,
+            entries: [
+                {binding: 0, resource: {buffer: this.uniformBuffer.Buffer}}
+            ]
+        });
     }
 
     cleanup(): void {
@@ -68,10 +86,11 @@ export class ParticleResourceStrategy implements IResourceStrategy {
         };
     }
 
-    get BindGroups(): { compute: GPUBindGroup[], render: GPUBindGroup[] } {
+    get BindGroups(): { compute: GPUBindGroup[], render: GPUBindGroup[], background: GPUBindGroup[] } {
         return {
             compute: [this.computeBindGroupA, this.computeBindGroupB],
-            render: [this.renderBindGroup]
+            render: [this.renderBindGroup],
+            background: [this.backgroundBindGroup],
         };
     }
 

@@ -90,7 +90,7 @@ Rounds `offset` up to the next multiple of `alignment`.
 #### `generateVariableDocumentation`
 ```ts
 function generateVariableDocumentation(
-    shaderType: 'compute' | 'vertex' | 'fragment',
+    shaderType: 'compute' | 'vertex' | 'fragment' | 'background',
     renderType: 'canvas' | 'particle'
 ): string
 ```
@@ -118,9 +118,10 @@ type ShaderConfig = {
     computeShader: string;
     vertexShader: string;
     fragmentShader: string;
+    backgroundShader?: string;
 }
 ```
-Defines the source code for each shader stage in a template.
+Defines the source code for each shader stage in a template. The optional `backgroundShader` is a fragment shader rendered as a full-screen pass behind particle instances.
 
 **Source:** `src/graphics/shaders/shader-config.tsx`
 
@@ -184,7 +185,7 @@ Pre-built `ShaderConfig` constants, each loaded from `.wgsl` files in `src/shade
 | `RaymarchShaderConfig` | Canvas SDF ray marching fragment shader |
 | `JuliaShaderConfig` | Canvas Julia set fractal fragment shader |
 | `BlankParticleConfig` | Blank particle compute, vertex, and fragment shaders |
-| `ParticleShaderConfig` | Particle physics simulation shaders |
+| `ParticleShaderConfig` | Rain simulation with mouse interaction |
 | `GolShaderConfig` | Game of Life compute, vertex, and fragment shaders |
 
 **Source:** `src/graphics/shaders/shader-builder.tsx`
@@ -272,7 +273,7 @@ interface IPipelineStrategy {
         resourceManager: GPUResourceManager,
         shaderConfig: ShaderConfig,
         context: PipelineContext
-    ): Promise<{ compute?: GPUComputePipeline; render: GPURenderPipeline }>;
+    ): Promise<{ compute?: GPUComputePipeline; render: GPURenderPipeline; background?: GPURenderPipeline }>;
 }
 ```
 
@@ -289,7 +290,7 @@ interface IResourceStrategy {
     cleanup(): void;
     postUpdate(): void;
     getPipelineContext(format: GPUTextureFormat): PipelineContext;
-    get BindGroups(): { compute?: GPUBindGroup[]; render: GPUBindGroup[] };
+    get BindGroups(): { compute?: GPUBindGroup[]; render: GPUBindGroup[]; background?: GPUBindGroup[] };
     get UniformBuffer(): UniformBuffer;
 }
 ```
@@ -319,7 +320,8 @@ interface IRenderStrategy {
         pipeline: GPURenderPipeline,
         bindGroup: GPUBindGroup,
         drawCount: number,
-        instanceCount: number
+        instanceCount: number,
+        background?: { pipeline: GPURenderPipeline; bindGroup: GPUBindGroup }
     ): void;
 }
 ```
@@ -577,6 +579,7 @@ function useShaderCompilation(
     fullVertexShader: { code: string; prefixLineCount: number; injections: ... };
     fullFragmentShader: { code: string; prefixLineCount: number; injections: ... };
     fullComputeShader: { code: string; prefixLineCount: number; injections: ... };
+    fullBackgroundShader: { code: string; prefixLineCount: number; injections: ... };
     diagnostics: Record<tab_id, shader_diagnostic[]>;
     computeConfig: ComputeConfig | undefined;
     getTabs: () => Tab[];
@@ -639,7 +642,7 @@ type render_settings = {
 
 #### `tab_id`
 ```ts
-type tab_id = 'compute' | 'vertex' | 'fragment';
+type tab_id = 'compute' | 'vertex' | 'fragment' | 'background';
 ```
 
 #### `dark_mode_props`

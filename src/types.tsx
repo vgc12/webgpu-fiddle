@@ -9,6 +9,7 @@ const TABS = {
     compute: 'compute',
     vertex: 'vertex',
     fragment: 'fragment',
+    background: 'background',
 } as const;
 
 export type tab_id = typeof TABS[keyof typeof TABS];
