@@ -201,12 +201,15 @@ Tracks elapsed time using `performance.now()`. The renderer reads `time.TotalTim
 ```
 src/
   components/
+    main.tsx                 React entry point (ReactDOM render)
     app.tsx                  App root, template/settings state
     shader-workspace.tsx     Composes editor + canvas
     template-selector.tsx    Template picker UI
     render-settings.tsx      Settings dialog
     editor/
-      monaco-editor.tsx      Tabbed Monaco editor with WGSL support
+      monaco-editor.tsx      Tabbed Monaco editor component (rendering only)
+      use-monaco-editor.ts   Hook for editor lifecycle, value sync, compile keybinding
+      use-editor-diagnostics.ts  Hook for shader diagnostic markers
     ui/
       main-canvas.tsx        WebGPUCanvas component
       toolbar.tsx            Top toolbar
@@ -214,6 +217,7 @@ src/
       popup.tsx, button.tsx  Shared UI primitives
   graphics/
     i-renderer.tsx           IRenderer interface
+    i-factory.tsx            IFactory generic interface
     webgpu-context.tsx       WebGPU init (adapter, device, context)
     gpu-resource-manager.tsx Buffer/module/bind group creation
     animation-controller.tsx requestAnimationFrame loop
@@ -222,6 +226,10 @@ src/
       strategy-based-renderer.tsx   Delegates to four strategies
       canvas-renderer.tsx           Full-screen quad renderer
       particle-renderer.tsx         Compute + instanced renderer
+      bind-groups/
+        canvas-bind-group-functions.tsx    Canvas bind group creation
+        particle-bind-group-functions.tsx  Particle bind group creation
+        ping-pong-bind-groups.tsx          Ping-pong bind group management
       strategies/
         rendering-strategies.tsx          Strategy interfaces
         canvas-resource-strategy.tsx      Canvas GPU resources
@@ -237,6 +245,10 @@ src/
       shader-config.tsx      ShaderConfig type + preset configs
       shader-validator.tsx   GPU compilation + error remapping
       generate-variable-documentation.tsx  Editor doc comments
+      extract-function-body.tsx            Extract function body from WGSL
+      shader-variable-map.tsx              Shader variable map type
+      get-compute-variable-map.tsx         Compute shader variable mappings
+      get-fragment-variable-map.tsx        Fragment shader variable mappings
     pipelines/
       render-pipeline-builder.tsx    Fluent render pipeline builder
       compute-pipeline-builder.tsx   Fluent compute pipeline builder
@@ -246,11 +258,19 @@ src/
       type-info.tsx          WGSL type sizes and alignments
       buffer-writer.tsx      Structured buffer writing helpers
       workgroup-utils.tsx    Workgroup count calculation
+      fragment-output.tsx    Fragment output utilities
+      vertex-attribute.tsx   Vertex attribute helpers
+      vertex-buffer-layout.tsx  Vertex buffer layout construction
   hooks/
     use-shader-compilation.tsx  Core shader editing hook
     build-initial-shaders.tsx   Prepend doc comments to shader code
     use-dark-mode.tsx           Dark mode with localStorage
+  utils/
+    time.ts                  Time tracking (elapsed, delta)
+    shader-url-codec.tsx     Shareable URL encoding/decoding
+    utils.ts                 General utility functions
   shaders/                   Default .wgsl files (imported as strings)
   templates.tsx              TEMPLATES array of template_def
   types.tsx                  Shared type aliases
+  test-data/                 JSON test fixtures for buffer writing
 ```

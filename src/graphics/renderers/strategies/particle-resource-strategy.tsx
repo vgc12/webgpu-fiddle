@@ -16,6 +16,9 @@ import {
     writeStructInstance
 } from "@/graphics/utils/buffer-writer.tsx";
 
+// Resource strategy for particle renderers. Creates the uniform buffer, double-buffered
+// input/output storage buffers, and bind groups for compute, render, and background passes.
+// Writes initial particle data (from JSON or random values) into the buffers on creation.
 export class ParticleResourceStrategy implements IResourceStrategy {
     private inOutBuffer: InputOutputBuffers;
     private uniformBuffer: UniformBuffer;
@@ -98,6 +101,8 @@ export class ParticleResourceStrategy implements IResourceStrategy {
         return this.uniformBuffer;
     }
 
+    // Fill Buffer A with initial particle data. If JSON data is provided, use it;
+    // otherwise generate random values based on each field's type.
     private writeInitialData(): void {
         const struct = this.computeConfig.inOutBufferStruct;
         if (!struct) {

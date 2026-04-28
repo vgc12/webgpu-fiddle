@@ -3,10 +3,14 @@ import type {IPipelineStrategy, IRenderStrategy, IResourceStrategy, IUpdateStrat
 import {BaseWebGPURenderer} from "@/graphics/renderers/base-web-gpu-renderer.tsx";
 import type {render_settings} from "@/types.tsx";
 
+// Extends the base renderer by delegating to four strategy interfaces instead of
+// using inheritance for each renderer variant. Each frame: write uniforms, run
+// compute (if present), render background (if present), draw main geometry, submit.
 export class StrategyBasedRenderer extends BaseWebGPURenderer {
     protected pipelines: { compute?: GPUComputePipeline; render: GPURenderPipeline; background?: GPURenderPipeline };
     protected mousePosition = {x: 1, y: 1};
 
+    // Track mouse position in physical pixels for the mousePosition uniform.
     handleMouseMove = (e: { clientX: number; clientY: number; }) => {
         if (!this.canvas) {
             return;
@@ -59,6 +63,7 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
         this.resourceStrategy.cleanup();
     }
 
+    // Per-frame callback: upload uniforms, dispatch compute, render, submit.
     protected update = (): void => {
         const context = this.gpuContext.Context;
         const device = this.gpuContext.Device;
@@ -91,6 +96,8 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
         device.queue.submit([encoder.finish()]);
     };
 
+    // Pack resolution, mouse, aspect ratio, time, and deltaTime into a Float32Array
+    // and upload to the GPU uniform buffer each frame.
     private updateUniforms(): void {
         const uniformData = new Float32Array([
             this.resolution.width,

@@ -6,6 +6,9 @@ import {RenderPipelineBuilder} from "@/graphics/pipelines/render-pipeline-builde
 import canvasVertexShader from '@/shaders/canvas.vertex.blank.wgsl';
 import {injectUniformsIntoShader} from "@/graphics/shaders/shader-builder.tsx";
 
+// Pipeline strategy for particle renderers. Builds a compute pipeline, a render
+// pipeline for instanced particle drawing, and optionally a background render
+// pipeline (full-screen triangle pass using the canvas vertex shader).
 export class ParticlePipelineStrategy implements IPipelineStrategy {
     async createPipelines(
         device: GPUDevice,

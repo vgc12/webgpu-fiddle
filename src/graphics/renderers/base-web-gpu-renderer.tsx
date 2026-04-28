@@ -27,7 +27,7 @@ export abstract class BaseWebGPURenderer implements IRenderer {
         this.animationController = new AnimationController();
     }
 
-    get device(): GPUDevice | null {
+    get Device(): GPUDevice | null {
         try {
             return this.gpuContext.Device;
         }

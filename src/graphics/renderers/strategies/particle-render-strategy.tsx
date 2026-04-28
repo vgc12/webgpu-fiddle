@@ -1,5 +1,8 @@
 import type {IRenderStrategy} from "@/graphics/renderers/strategies/rendering-strategies.tsx";
 
+// Render strategy for particle renderers. Optionally renders a background pass
+// (full-screen triangle, clears to black), then draws instanced particle geometry
+// on top using loadOp 'load' to preserve the background.
 export class ParticleRenderStrategy implements IRenderStrategy {
     render(
         encoder: GPUCommandEncoder,

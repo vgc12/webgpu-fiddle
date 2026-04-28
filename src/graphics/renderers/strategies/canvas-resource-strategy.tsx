@@ -6,6 +6,8 @@ import {
     createCanvasRenderLayout
 } from "@/graphics/renderers/bind-groups/canvas-bind-group-functions.tsx";
 
+// Resource strategy for canvas renderers. Creates a uniform buffer and a single
+// render bind group with the uniform at binding 0. No compute resources needed.
 export class CanvasResourceStrategy implements IResourceStrategy {
     private uniformBuffer: UniformBuffer;
     private renderBindGroup: GPUBindGroup;

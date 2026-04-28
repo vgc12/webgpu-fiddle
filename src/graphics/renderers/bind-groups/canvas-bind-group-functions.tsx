@@ -1,5 +1,8 @@
 import type {UniformBuffer} from "@/graphics/pipelines/input-output-buffers.tsx";
 
+// Creates bind group layouts and bind groups for the canvas renderer.
+// Canvas only needs the uniform buffer at binding 0, visible to vertex + fragment stages.
+
 export interface CanvasBindGroupConfig {
     uniformBuffer: UniformBuffer;
     device: GPUDevice;

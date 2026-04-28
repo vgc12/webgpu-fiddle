@@ -38,7 +38,7 @@ export function useShaderCompilation(
 
     // Debounced live validation
     useEffect(() => {
-        const device = rendererRef.current?.device;
+        const device = rendererRef.current?.Device;
         if (!device) return;
 
         const timer = setTimeout(async () => {
@@ -92,7 +92,7 @@ export function useShaderCompilation(
             ? injectUniformsIntoShader(userShaders.background)
             : { code: '', prefixLineCount: 0, injections: [] };
 
-        const device = rendererRef.current?.device;
+        const device = rendererRef.current?.Device;
         if (!device) return;
 
         const validations = [

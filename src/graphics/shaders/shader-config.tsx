@@ -1,4 +1,7 @@
-﻿// eslint-disable-next-line @typescript-eslint/naming-convention
+﻿// Defines the source code for each shader stage in a template.
+// The optional backgroundShader is a fragment shader rendered as a full-screen
+// pass behind particle instances.
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type ShaderConfig = {
     computeShader: string;
     vertexShader: string;

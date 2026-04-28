@@ -6,6 +6,9 @@ import {NullUpdateStrategy} from "@/graphics/renderers/strategies/null-update-st
 import {CanvasPipelineStrategy} from "@/graphics/renderers/strategies/canvas-pipeline-strategy.tsx";
 import {CanvasRenderStrategy} from "@/graphics/renderers/strategies/canvas-render-strategy.tsx";
 
+// Renders a full-screen triangle with vertex + fragment shaders only (no compute).
+// Plugs in canvas-specific strategies: uniform-only resources, a simple render
+// pipeline, a single draw call, and a no-op update step.
 export class CanvasRenderer extends StrategyBasedRenderer {
     constructor(
         canvas: HTMLCanvasElement,

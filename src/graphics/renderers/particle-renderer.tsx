@@ -7,6 +7,10 @@ import type {render_settings} from "@/types.tsx";
 import {ParticlePipelineStrategy} from "@/graphics/renderers/strategies/particle-pipeline-strategy.tsx";
 import {ParticleResourceStrategy} from "@/graphics/renderers/strategies/particle-resource-strategy.tsx";
 
+// Renders instanced particles driven by a compute shader each frame.
+// Plugs in particle-specific strategies: ping-pong storage buffers, compute +
+// render pipelines, compute dispatch with buffer swap, and instanced drawing
+// with an optional background pass.
 export class ParticleRenderer extends StrategyBasedRenderer {
     constructor(
         canvas: HTMLCanvasElement,
@@ -40,7 +44,8 @@ export class ParticleRenderer extends StrategyBasedRenderer {
     ): Promise<void> {
         const newConfig = options?.computeConfig;
 
-        // Only recreate buffers if the struct layout or particle count changed
+        // Only recreate GPU buffers if the struct layout, particle count, or initial
+        // data changed. Otherwise, just rebuild pipelines to preserve particle state.
         const needsNewBuffers = newConfig && (
             newConfig.particleCount !== this.computeConfig.particleCount ||
             newConfig.inOutBufferStruct?.size !== this.computeConfig.inOutBufferStruct?.size ||

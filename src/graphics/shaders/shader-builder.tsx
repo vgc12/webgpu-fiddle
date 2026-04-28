@@ -1,4 +1,7 @@
-﻿import {TypeInfo} from "@/graphics/utils/type-info.tsx";
+﻿// Core shader processing: uniform injection into WGSL entry points, WGSL struct
+// parsing with alignment/offset calculation, and pre-built ShaderConfig constants.
+
+import {TypeInfo} from "@/graphics/utils/type-info.tsx";
 import squareParticleCompute from '@/shaders/particle.compute.rain.wgsl';
 import squareParticleVertexCompute from '@/shaders/particle.vertex.rain.wgsl';
 import squareParticleFragmentCompute from '@/shaders/particle.fragment.rain.wgsl';
@@ -57,6 +60,8 @@ export const GolShaderConfig: ShaderConfig = {
     backgroundShader: defaultBackgroundShader,
 };
 
+// Parse the @workgroup_size(x, y, z) attribute from a compute shader.
+// Returns [64, 1, 1] as a default if not found.
 export function getWorkgroupSize(computeShader: string): [number, number, number] {
     const match = computeShader.match(
         /@workgroup_size\s*\(\s*(\d+)(?:\s*,\s*(\d+))?(?:\s*,\s*(\d+))?\s*\)/
@@ -74,6 +79,9 @@ export function getWorkgroupSize(computeShader: string): [number, number, number
     return [x, y, z];
 }
 
+// Prepend the uniform struct/bindings and inject uniform assignment statements
+// into every @vertex, @fragment, and @compute entry point. Returns the transformed
+// code plus metadata (prefix line count, injection positions) for error line remapping.
 export function injectUniformsIntoShader(wgslCode: string): { code: string; prefixLineCount: number; injections: { atLine: number; linesAdded: number }[] } {
     const prefix = uniformStruct + '\n';
     const prefixLineCount = prefix.split('\n').length - 1;
@@ -173,10 +181,12 @@ function parseStructFields(structName: string, structBody: string): StructInfo |
 }
 
 
+// Round offset up to the next multiple of alignment.
 export function alignTo(offset: number, alignment: number): number {
     return Math.ceil(offset / alignment) * alignment;
 }
 
+// Find all struct definitions in WGSL code and return a map of name to parsed info.
 export function parseAllStructsFromWGSL(wgslCode: string): Map<string, StructInfo> {
     const structs = new Map<string, StructInfo>();
 
@@ -198,6 +208,8 @@ export function parseAllStructsFromWGSL(wgslCode: string): Map<string, StructInf
     return structs;
 }
 
+// Find the @binding declaration for a variable name (e.g. 'input'), extract its
+// type (unwrapping array<T> if needed), and return the matching parsed struct.
 export function getStructFromBufferBinding(wgslCode: string, bindingName: string): StructInfo | null {
     // First, parse all structs
     const allStructs = parseAllStructsFromWGSL(wgslCode);
@@ -231,6 +243,7 @@ export function getStructFromBufferBinding(wgslCode: string, bindingName: string
 }
 
 
+// Parse a single named struct definition from WGSL code. Returns null if not found.
 export function parseStructFromWGSL(wgslCode: string, structName: string): StructInfo | null {
     // Regex to find struct definition
     const structRegex = new RegExp(

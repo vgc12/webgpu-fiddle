@@ -4,9 +4,22 @@
 
 - **Node.js** (v18 or later)
 - A browser with **WebGPU support** (Chrome 113+, Edge 113+, or Firefox Nightly with the flag enabled)
+- A **relatively modern GPU** with up-to-date drivers (integrated graphics on recent CPUs will work for simpler shaders, but a discrete GPU is recommended for compute-heavy templates like Game of Life)
 
 ::: tip
 To check if your browser supports WebGPU, open the developer console and run `navigator.gpu`. If it returns `undefined`, your browser does not support WebGPU.
+:::
+
+::: tip Linux users
+For the best WebGPU experience on Linux, launch your browser with the Vulkan backend. For example:
+
+```bash
+google-chrome --enable-features=Vulkan
+# or
+chromium --enable-features=Vulkan
+```
+
+Without this, Chrome may fall back to an OpenGL-based backend that has limited WebGPU support or lower performance.
 :::
 
 ## Installation

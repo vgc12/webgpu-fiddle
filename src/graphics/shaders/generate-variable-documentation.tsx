@@ -2,11 +2,6 @@
  * Generate documentation/hints for Monaco editor
  */
 
-/*struct Uniforms {
-    resolution : vec2f,
-        aspectRatio: f32,
-        time: f32,
-}*/
 
 function generateUniformDocumentation() {
     const lines: string[] = [
@@ -29,7 +24,7 @@ export function generateVariableDocumentation(shaderType: 'compute' | 'vertex' |
         lines.push('// workgroup_id: vec3<u32> - Which workgroup this invocation is in');
     } else if (shaderType === 'vertex') {
         lines.push('// vertexIndex: u32 - Index of the current vertex');
-        lines.push('// instanceIndex: u32 - Index of the current vertex');
+        lines.push('// instanceIndex: u32 - Index of the current instance');
         if(renderType === 'particle') {
             lines.push('// particlePos: vec2<f32> - Position of the particle');
             lines.push('// particleVel: vec2<f32> - Velocity of the particle');

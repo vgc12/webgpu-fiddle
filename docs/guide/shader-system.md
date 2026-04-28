@@ -145,7 +145,6 @@ Particle vertex shaders also show `particlePos` and `particleVel`.
 
 **Fragment shaders:**
 ```
-// color: vec4<f32> - Input color from vertex shader
 // fragCoord: vec4<f32> - Fragment coordinates
 // Return: vec4<f32> - Output color for this fragment
 ```

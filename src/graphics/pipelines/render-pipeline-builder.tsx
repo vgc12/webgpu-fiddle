@@ -1,5 +1,8 @@
 ﻿import type {VertexBufferLayout} from "@/graphics/utils/vertex-buffer-layout.tsx";
 
+// Fluent builder for GPURenderPipeline.
+// Configure vertex/fragment shader modules, entry points, topology, and format,
+// then call build() or buildAsync() to create the pipeline.
 export class RenderPipelineBuilder {
     private layout: GPUPipelineLayout | 'auto' = 'auto';
     private vertexShaderModule: GPUShaderModule | null = null;

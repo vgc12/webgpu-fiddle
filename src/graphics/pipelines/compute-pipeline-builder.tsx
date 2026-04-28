@@ -1,4 +1,6 @@
-﻿export class ComputePipelineBuilder {
+﻿// Fluent builder for GPUComputePipeline.
+// Chain setLayout(), setShaderModule(), setEntryPoint(), then call build() or buildAsync().
+export class ComputePipelineBuilder {
     private layout: GPUPipelineLayout | 'auto' = 'auto';
     private shaderModule: GPUShaderModule | null = null;
     private entryPoint: string = 'main';
