@@ -5,6 +5,7 @@ import { withMermaid } from 'vitepress-plugin-mermaid'
 export default withMermaid(defineConfig({
   title: "WebGPU-Fiddle",
   description: "A tool for creating WGSL shaders in the browser.",
+  base: '/docs/',
   markdown: {
     theme: {
       light: "catppuccin-latte",

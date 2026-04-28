@@ -30,6 +30,9 @@ export function Toolbar({templateName, darkMode, onCompile, onChangeTemplate, on
             }}>{showCopied ? 'Copied!' : 'Share'}</ButtonLightRectangle>
             <ButtonLightRectangle onClick={onDownload}>Download</ButtonLightRectangle>
             <ButtonLightRectangle onClick={() => fileInputRef.current?.click()}>Upload</ButtonLightRectangle>
+            <a href="https://webgpu-fiddle.vercel.app/docs/" target="_blank" rel="noopener noreferrer">
+                <ButtonLightRectangle>Docs</ButtonLightRectangle>
+            </a>
             <input
                 ref={fileInputRef}
                 type="file"
