@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from "react";
-import {cn} from "@/utils/utils.ts";
+import {cn} from "@/utils/utils.tsx";
 
 export function SplitPane({children, className, defaultSplit = 60}: {
     children: [React.ReactNode, React.ReactNode];

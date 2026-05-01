@@ -2,7 +2,7 @@
 import {AnimationController} from "@/graphics/animation-controller.tsx";
 import {GPUResourceManager} from "@/graphics/gpu-resource-manager.tsx";
 import type {IRenderer} from "@/graphics/i-renderer.tsx";
-import {Time} from "@/utils/time.ts";
+import {Time} from "@/utils/time.tsx";
 import type {ShaderConfig} from "@/graphics/shaders/shader-config.tsx";
 
 
@@ -50,6 +50,7 @@ export abstract class BaseWebGPURenderer implements IRenderer {
 
     resize(width: number, height: number): void {
         this.resolution = {width, height};
+        this.gpuContext?.reconfigure();
     }
 
     destroy(): void {

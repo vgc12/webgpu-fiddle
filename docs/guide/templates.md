@@ -1,3 +1,4 @@
+[//]: <> (AI was used in the making of this file for styling and layout. Has been reviewed multiple times for accuracy)
 # Templates
 
 Templates are the starting point for every shader in WebGPU Fiddle. Each template provides a set of default shaders and render settings that you can modify in the editor.
@@ -75,8 +76,8 @@ The marching loop takes steps equal to the SDF distance (since that's guaranteed
 for (i = 0; i < 80; i++) {
     p = ro + rd * t;
     let d: f32 = sceneD(p);
-    t += d;
     if (d < .001 || t > 100.) { break; }
+    t += d;
 }
 ```
 

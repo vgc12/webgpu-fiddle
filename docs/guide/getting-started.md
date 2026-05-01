@@ -1,17 +1,18 @@
+[//]: <> (AI was used in the making of this file for layout. Has been reviewed multiple times for accuracy)
 # Getting Started
 
 ## Prerequisites
 
 - **Node.js** (v18 or later)
-- A browser with **WebGPU support** (Chrome 113+, Edge 113+, Firefox 141+, or their derivatives)
-- A **relatively modern GPU** with up-to-date drivers (integrated graphics on recent CPUs will work for simpler shaders, but a discrete GPU is recommended for compute-heavy templates like Game of Life)
+- A browser with **WebGPU support** (Chrome 113+, Edge 113+, Firefox 141+, or their derivatives). **Safari** may work but WebGPU may need to be enabled manually first (see the Safari tip below). If in doubt, use Chrome, Edge, or Firefox.
+- A **GPU** with up-to-date drivers. Any GPU that the browser exposes to WebGPU will work, including **integrated graphics** (Intel UHD/Iris, AMD Radeon Graphics, Apple Silicon, etc.). A discrete GPU is not required. Compute-heavy templates like Game of Life will simply run at lower frame rates on weaker integrated GPUs.
 
 ::: tip
 To check if your browser supports WebGPU, open the developer console and run `navigator.gpu`. If it returns `undefined`, your browser does not support WebGPU.
 :::
 
 ::: tip Linux users
-For the best WebGPU experience on Linux, launch your browser with the Vulkan backend:
+For the best WebGPU experience on Linux, launch your browser with the Vulkan backend, :
 
 **Chromium-based browsers:**
 ```bash
@@ -28,9 +29,38 @@ MOZ_ENABLE_VULKAN=1 zen-browser
 ```
 
 Without this, your browser may fall back to an OpenGL-based backend that has limited WebGPU support or lower performance.
+
+Firefox users will also need to enable WebGPU itself: open `about:config`, search for `dom.webgpu.enabled`, and set it to `true`.
 :::
 
-## Installation
+::: warning Firefox + Linux + NVIDIA
+The combination of **Firefox on Linux with an NVIDIA GPU** is known to have issues running this project out of the box. The canvas may fail to render, render incorrectly, or crash the tab. If you hit this:
+
+- Launch Firefox with the Vulkan backend as shown above (`MOZ_ENABLE_VULKAN=1 firefox`).
+- Make sure the proprietary NVIDIA drivers are installed and up to date (the open `nouveau` driver does not have working WebGPU support).
+- If it still doesn't work, use a Chromium-based browser (Chrome, Chromium, Edge, Brave, etc.) instead, those have more reliable WebGPU support on Linux + NVIDIA.
+:::
+
+::: tip Safari users
+WebGPU may not be enabled by default in Safari. To enable it:
+
+1. Open Safari and go to **Settings > Advanced**, then check **Show features for web developers** (or **Show Develop menu in menu bar** on older versions).
+2. Open the **Develop** menu, then go to **Feature Flags** (or **Experimental Features** on older versions).
+3. Find **WebGPU** in the list and enable it.
+4. Restart Safari.
+
+If WebGPU is still unavailable after enabling the flag, your Safari version may be too old. Use Chrome, Edge, or Firefox instead.
+:::
+
+## Using the App
+
+If you just want to use WebGPU Fiddle, you don't need to install anything. The hosted version is available at **[webgpu.vercel.app](https://webgpu.vercel.app)**, just open it in a supported browser and start writing shaders.
+
+## Installation (for development)
+
+::: info
+You only need this section if you want to **run the project locally** to add features, fix bugs, or contribute. To just use the app, visit [webgpu.vercel.app](https://webgpu.vercel.app) instead.
+:::
 
 Clone the repository and install dependencies:
 

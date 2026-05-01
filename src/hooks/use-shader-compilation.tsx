@@ -8,7 +8,7 @@ import {type shader_diagnostic, validateShader} from "@/graphics/shaders/shader-
 import type {ComputeConfig} from "@/graphics/pipelines/compute-config.tsx";
 import type {IRenderer} from "@/graphics/i-renderer.tsx";
 import type {render_settings, tab_id} from "@/types.tsx";
-import {buildInitialShaders} from "@/hooks/build-initial-shaders.tsx";
+import {buildInitialShaders} from "@/graphics/shaders/build-initial-shaders.tsx";
 import type {ShaderConfig} from "@/graphics/shaders/shader-config.tsx";
 import type {Tab} from "@/components/editor/monaco-editor.tsx";
 import JSZip from "jszip";

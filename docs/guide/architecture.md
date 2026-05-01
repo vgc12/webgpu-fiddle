@@ -1,3 +1,4 @@
+[//]: <> (AI was used in the making of this file for diagrams and layout. Has been reviewed multiple times for accuracy)
 # Architecture
 
 This page explains how the major pieces of WebGPU Fiddle fit together, from the React UI down to the GPU.
@@ -77,8 +78,16 @@ classDiagram
         #createPipelines()
     }
 
-    class CanvasRenderer
-    class ParticleRenderer
+    class CanvasRenderer {
+        +constructor(canvas, shaderConfig, renderSettings, resolution?)
+        +recompileShaders(newShaderConfig)
+    }
+
+    class ParticleRenderer {
+        -computeConfig: ComputeConfig
+        +constructor(canvas, shaderConfig, renderSettings, computeConfig?, resolution?)
+        +recompileShaders(newShaderConfig, options?)
+    }
 
     IRenderer <|.. BaseWebGPURenderer
     BaseWebGPURenderer <|-- StrategyBasedRenderer
@@ -111,17 +120,17 @@ Each renderer is composed of four strategies that handle different responsibilit
 Every frame, `StrategyBasedRenderer.update()` runs this sequence:
 
 ```mermaid
-flowchart LR
-    A[Write uniforms\nto GPU buffer] --> B[Create\ncommand encoder]
-    B --> C{Compute\npipeline?}
-    C -- Yes --> D[IUpdateStrategy.update\ndispatch compute shader]
-    D --> E{Background\npipeline?}
+flowchart TD
+    A[Write uniforms to GPU buffer] --> B[Create command encoder]
+    B --> C{Compute pipeline?}
+    C -- Yes --> D[IUpdateStrategy.update<br/>dispatch compute shader]
+    D --> E{Background pipeline?}
     C -- No --> E
-    E -- Yes --> F[Background pass\nfull-screen triangle]
-    F --> G[IRenderStrategy.render\ndraw call]
+    E -- Yes --> F[Background pass<br/>full-screen triangle]
+    F --> G[IRenderStrategy.render<br/>draw call]
     E -- No --> G
-    G --> H[Submit\ncommand buffer]
-    H --> I[IResourceStrategy.postUpdate\nswap buffers]
+    G --> H[Submit command buffer]
+    H --> I[IResourceStrategy.postUpdate<br/>swap buffers]
 ```
 
 For **canvas renderers**, the compute and background steps are skipped and `postUpdate` is a no-op. The render pass draws 3 vertices (one oversized triangle covering the viewport).
@@ -200,16 +209,16 @@ Tracks elapsed time using `performance.now()`. The renderer reads `time.TotalTim
 
 ```
 src/
+  main.tsx                   React entry point (ReactDOM render)
   components/
-    main.tsx                 React entry point (ReactDOM render)
     app.tsx                  App root, template/settings state
     shader-workspace.tsx     Composes editor + canvas
     template-selector.tsx    Template picker UI
     render-settings.tsx      Settings dialog
     editor/
       monaco-editor.tsx      Tabbed Monaco editor component (rendering only)
-      use-monaco-editor.ts   Hook for editor lifecycle, value sync, compile keybinding
-      use-editor-diagnostics.ts  Hook for shader diagnostic markers
+      use-monaco-editor.tsx  Hook for editor lifecycle, value sync, compile keybinding
+      use-editor-diagnostics.tsx  Hook for shader diagnostic markers
     ui/
       main-canvas.tsx        WebGPUCanvas component
       toolbar.tsx            Top toolbar
@@ -217,7 +226,6 @@ src/
       popup.tsx, button.tsx  Shared UI primitives
   graphics/
     i-renderer.tsx           IRenderer interface
-    i-factory.tsx            IFactory generic interface
     webgpu-context.tsx       WebGPU init (adapter, device, context)
     gpu-resource-manager.tsx Buffer/module/bind group creation
     animation-controller.tsx requestAnimationFrame loop
@@ -246,9 +254,7 @@ src/
       shader-validator.tsx   GPU compilation + error remapping
       generate-variable-documentation.tsx  Editor doc comments
       extract-function-body.tsx            Extract function body from WGSL
-      shader-variable-map.tsx              Shader variable map type
-      get-compute-variable-map.tsx         Compute shader variable mappings
-      get-fragment-variable-map.tsx        Fragment shader variable mappings
+      build-initial-shaders.tsx            Prepend doc comments to shader code
     pipelines/
       render-pipeline-builder.tsx    Fluent render pipeline builder
       compute-pipeline-builder.tsx   Fluent compute pipeline builder
@@ -258,18 +264,26 @@ src/
       type-info.tsx          WGSL type sizes and alignments
       buffer-writer.tsx      Structured buffer writing helpers
       workgroup-utils.tsx    Workgroup count calculation
-      fragment-output.tsx    Fragment output utilities
       vertex-attribute.tsx   Vertex attribute helpers
       vertex-buffer-layout.tsx  Vertex buffer layout construction
   hooks/
     use-shader-compilation.tsx  Core shader editing hook
-    build-initial-shaders.tsx   Prepend doc comments to shader code
     use-dark-mode.tsx           Dark mode with localStorage
   utils/
-    time.ts                  Time tracking (elapsed, delta)
+    time.tsx                 Time tracking (elapsed, delta)
     shader-url-codec.tsx     Shareable URL encoding/decoding
-    utils.ts                 General utility functions
+    utils.tsx                General utility functions
   shaders/                   Default .wgsl files (imported as strings)
+    uniforms.wgsl                Shared uniform struct
+    canvas/
+      blank/{vertex,fragment}.wgsl
+      julia/fragment.wgsl
+      sdf/fragment.wgsl
+    particle/
+      default-background.wgsl    Shared default background shader
+      blank/{vertex,fragment,compute}.wgsl
+      rain/{vertex,fragment,compute}.wgsl
+      gol/{vertex,fragment,compute}.wgsl
   templates.tsx              TEMPLATES array of template_def
   types.tsx                  Shared type aliases
   test-data/                 JSON test fixtures for buffer writing

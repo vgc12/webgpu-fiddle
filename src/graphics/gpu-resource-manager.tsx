@@ -19,12 +19,4 @@ export class GPUResourceManager {
         return this.device.createShaderModule({code, label});
     }
 
-    // Create a bind group that binds GPU resources (buffers, textures) to shader binding slots.
-    createBindGroup(
-        layout: GPUBindGroupLayout,
-        entries: GPUBindGroupEntry[],
-        label?: string
-    ): GPUBindGroup {
-        return this.device.createBindGroup({layout, entries, label});
-    }
 }

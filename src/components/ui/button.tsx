@@ -1,5 +1,5 @@
 ﻿import React, {type ComponentProps} from "react";
-import {cn} from "@/utils/utils.ts";
+import {cn} from "@/utils/utils.tsx";
 
 export const ButtonLightSquare: React.FC<ComponentProps<'button'>> = (props) => {
     return (

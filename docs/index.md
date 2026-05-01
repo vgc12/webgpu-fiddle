@@ -1,4 +1,6 @@
 ---
+[//]: <> (AI was used in the making of this file for styling and layout. Has been reviewed multiple times for accuracy)
+
 layout: home
 
 hero:
@@ -27,3 +29,4 @@ features:
   - title: Configurable Render Settings
     details: Adjust vertex draw count, instance count, and initial data per template. Fine-tune rendering parameters without touching shader code.
 ---
+

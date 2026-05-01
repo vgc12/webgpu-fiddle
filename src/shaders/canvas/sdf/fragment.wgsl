@@ -12,6 +12,9 @@ fn rand(co: f32) -> f32 {
     return fract(sin(co * 91.3458) * 47453.5453);
 }
 
+// Credit to Inigo Quilez for SDF functions and operation functions
+// https://iquilezles.org/articles/distfunctions/
+
 // Smooth minimum: blends two SDF distances with a smooth transition
 // instead of the hard crease you get from min(a, b).
 // k controls the blend radius (larger k = wider blend).
@@ -211,8 +214,8 @@ fn fragmentMain(
     for(i = 0; i < 80; i++){                             // 80 max steps
         p = ro + rd * t;                                 // current point along the ray
         let d : f32 = sceneD(p);                         // distance to nearest surface
-        t += d;                                          // advance by that distance (sphere tracing)
         if(d < .001 || t > 100.) { break; }              // hit (< 0.001) or miss (> 100 units away)
+        t += d;                                          // advance by that distance (sphere tracing)
     }
 
     // Fog: objects further away fade toward the background

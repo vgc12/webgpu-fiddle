@@ -1,5 +1,5 @@
 import '../style.css'
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {useDarkMode} from "@/hooks/use-dark-mode.tsx";
 import {ShaderWorkspace} from "@/components/shader-workspace.tsx";
 import {TemplateSelector} from "@/components/template-selector.tsx";
@@ -8,47 +8,34 @@ import type {template_def, render_settings, tab_id} from "@/types.tsx";
 import {TEMPLATES} from "@/templates.tsx";
 import {clearShareHash, decodeShareUrl} from "@/utils/shader-url-codec.tsx";
 
-function loadFromShareUrl(): {
-    template: template_def;
-    renderSettings: render_settings;
-    shaders: Record<tab_id, string>;
-} | null {
-    const shared = decodeShareUrl();
-    if (!shared) return null;
-
-    const template = TEMPLATES.find(t => t.name === shared.template);
-    if (!template) return null;
-
-    clearShareHash();
-    return {
-        template,
-        renderSettings: {
-            ...shared.renderSettings,
-            initialData: null,
-        },
-        shaders: shared.shaders,
-    };
-}
-
-let SHARED_STATE: ReturnType<typeof loadFromShareUrl> = null;
-try {
-    SHARED_STATE = loadFromShareUrl();
-} catch {
-    console.warn('Failed to decode share URL');
-}
-
 function App() {
+    const [sharedState] = useState(() => {
+        const shared = decodeShareUrl();
+        if (!shared) return null;
+        const template = TEMPLATES.find(t => t.name === shared.template);
+        if (!template) return null;
+        return {
+            template,
+            renderSettings: { ...shared.renderSettings, initialData: null },
+            shaders: shared.shaders,
+        };
+    });
+
+    useEffect(() => {
+        if (sharedState) clearShareHash();
+    }, [sharedState]);
+
     const [isDarkMode, setIsDarkMode] = useDarkMode() as [boolean, (v: boolean) => void];
 
-    const [selectedTemplate, setSelectedTemplate] = useState<template_def | null>(SHARED_STATE?.template ?? null);
+    const [selectedTemplate, setSelectedTemplate] = useState<template_def | null>(sharedState?.template ?? null);
     const [renderSettings, setRenderSettings] = useState<render_settings>(
-        SHARED_STATE?.renderSettings ?? {
+        sharedState?.renderSettings ?? {
             vertexDrawCount: 6,
             instanceCount: 1,
             initialData: null,
         }
     );
-    const [initialSharedShaders] = useState<Record<tab_id, string> | null>(SHARED_STATE?.shaders ?? null);
+    const [initialSharedShaders] = useState<Record<tab_id, string> | null>(sharedState?.shaders ?? null);
     const [templateSelectorOpen, setTemplateSelectorOpen] = useState<boolean>(false);
     const [renderSettingsOpen, setRenderSettingsOpen] = useState<boolean>(false);
 

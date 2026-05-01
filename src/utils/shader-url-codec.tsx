@@ -7,7 +7,10 @@ export type shared_shader_state = {
     renderSettings: { vertexDrawCount: number; instanceCount: number };
     shaders: Record<tab_id, string>;
 }
-
+/*
+ * Encodes the template name, render settings such as vertex & instance count, and shaders are URL encoded
+ * and then decoded when opening the link with a share param in the URL.
+ */
 export function encodeShareUrl(
     templateName: string,
     renderSettings: render_settings,
@@ -26,6 +29,9 @@ export function encodeShareUrl(
     return `${window.location.origin}${window.location.pathname}#share/${compressed}`;
 }
 
+/*
+ * Decodes a URL when the site opens using a link with a share param
+ */
 export function decodeShareUrl(): shared_shader_state | null {
     const hash = window.location.hash;
     if (!hash.startsWith('#share/')) return null;

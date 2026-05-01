@@ -1,3 +1,4 @@
+    [//]: <> (AI was used in the making of this file for styling, diagrams, and layout. Has been reviewed multiple times for accuracy)
 # Shader System
 
 This page explains how WebGPU Fiddle processes your shader code behind the scenes, from what you type in the editor to what runs on the GPU.

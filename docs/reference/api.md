@@ -100,6 +100,19 @@ Generates documentation comments listing available variables for a given shader 
 
 ---
 
+#### `buildInitialShaders`
+```ts
+function buildInitialShaders(
+    config: ShaderConfig,
+    renderType: 'canvas' | 'particle'
+): Record<tab_id, string>
+```
+Prepends auto-generated documentation comments to each shader stage from a `ShaderConfig`.
+
+**Source:** `src/graphics/shaders/build-initial-shaders.tsx`
+
+---
+
 #### `extractFunctionBody`
 ```ts
 function extractFunctionBody(userCode: string, functionName?: string): string
@@ -592,19 +605,6 @@ function useShaderCompilation(
 Core React hook that manages the full shader editing workflow: tab state, live validation, compilation, hot-reloading, and zip import/export.
 
 **Source:** `src/hooks/use-shader-compilation.tsx`
-
----
-
-#### `buildInitialShaders`
-```ts
-function buildInitialShaders(
-    config: ShaderConfig,
-    renderType: 'canvas' | 'particle'
-): Record<tab_id, string>
-```
-Prepends auto-generated documentation comments to each shader stage from a `ShaderConfig`.
-
-**Source:** `src/hooks/build-initial-shaders.tsx`
 
 ---
 

@@ -53,10 +53,12 @@ function useCanvasResize(
 
         const observer = new ResizeObserver((entries) => {
             const dpr = window.devicePixelRatio || 1;
+            const maxDim = 8192;
             for (const entry of entries) {
                 const {width, height} = entry.contentRect;
-                const pw = Math.round(width * dpr);
-                const ph = Math.round(height * dpr);
+                const pw = Math.max(1, Math.min(maxDim, Math.round(width * dpr)));
+                const ph = Math.max(1, Math.min(maxDim, Math.round(height * dpr)));
+                if (canvas.width === pw && canvas.height === ph) continue;
                 canvas.width = pw;
                 canvas.height = ph;
                 onResize(pw, ph);

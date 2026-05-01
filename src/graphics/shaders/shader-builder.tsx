@@ -2,21 +2,21 @@
 // parsing with alignment/offset calculation, and pre-built ShaderConfig constants.
 
 import {TypeInfo} from "@/graphics/utils/type-info.tsx";
-import squareParticleCompute from '@/shaders/particle.compute.rain.wgsl';
-import squareParticleVertexCompute from '@/shaders/particle.vertex.rain.wgsl';
-import squareParticleFragmentCompute from '@/shaders/particle.fragment.rain.wgsl';
-import blankCanvasVertexShader from '@/shaders/canvas.vertex.blank.wgsl';
-import blankCanvasFragmentShader from '@/shaders/canvas.fragment.blank.wgsl'
-import rayMarchCanvasFragmentShader from '@/shaders/canvas.fragment.sdf.wgsl';
-import juliaFragmentShader from '@/shaders/canvas.fragment.julia.wgsl';
-import blankParticleComputeShader from '@/shaders/particle.compute.blank.wgsl';
-import blankParticleVertexShader from '@/shaders/particle.vertex.blank.wgsl';
-import blankParticleFragmentShader from '@/shaders/particle.fragment.blank.wgsl';
+import squareParticleCompute from '@/shaders/particle/rain/compute.wgsl';
+import squareParticleVertexCompute from '@/shaders/particle/rain/vertex.wgsl';
+import squareParticleFragmentCompute from '@/shaders/particle/rain/fragment.wgsl';
+import blankCanvasVertexShader from '@/shaders/canvas/blank/vertex.wgsl';
+import blankCanvasFragmentShader from '@/shaders/canvas/blank/fragment.wgsl'
+import rayMarchCanvasFragmentShader from '@/shaders/canvas/sdf/fragment.wgsl';
+import juliaFragmentShader from '@/shaders/canvas/julia/fragment.wgsl';
+import blankParticleComputeShader from '@/shaders/particle/blank/compute.wgsl';
+import blankParticleVertexShader from '@/shaders/particle/blank/vertex.wgsl';
+import blankParticleFragmentShader from '@/shaders/particle/blank/fragment.wgsl';
 
-import golCompute from '@/shaders/particle.compute.gol.wgsl';
-import golVertex from '@/shaders/particle.vertex.gol.wgsl';
-import golFragment from '@/shaders/particle.fragment.gol.wgsl';
-import defaultBackgroundShader from '@/shaders/particle.background.default.wgsl';
+import golCompute from '@/shaders/particle/gol/compute.wgsl';
+import golVertex from '@/shaders/particle/gol/vertex.wgsl';
+import golFragment from '@/shaders/particle/gol/fragment.wgsl';
+import defaultBackgroundShader from '@/shaders/particle/default-background.wgsl';
 
 import uniformStruct from '@/shaders/uniforms.wgsl';
 import type {ShaderConfig} from "@/graphics/shaders/shader-config.tsx";

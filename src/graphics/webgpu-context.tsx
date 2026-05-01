@@ -50,6 +50,18 @@ export class WebGPUContext {
         return this.format;
     }
 
+    // Re-bind the device to the canvas after the canvas drawing buffer changes
+    // size. Firefox invalidates the configured swap chain on canvas.width/height
+    // change and requires a fresh configure() before the next getCurrentTexture().
+    reconfigure(): void {
+        if (!this.context || !this.device) return;
+        this.context.configure({
+            device: this.device,
+            format: this.format,
+            alphaMode: 'opaque'
+        });
+    }
+
     // Release the GPU device and unconfigure the canvas context.
     destroy(): void {
         this.device?.destroy();

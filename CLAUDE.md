@@ -52,12 +52,13 @@ template, edit vertex/fragment/compute shaders in a Monaco editor, and see resul
 - **Templates** (`src/templates.tsx`) — `TEMPLATES` array of `template_def`, each specifying shader type, `ShaderConfig`,
   and default render settings (vertex draw count, instance count, initial data)
 - **Hooks** (`src/hooks/`) — `useShaderCompilation` manages shader state, compilation, and renderer recompilation;
-  `useDarkMode` and `buildInitialShaders` are also here
+  `useDarkMode` is also here. `buildInitialShaders` lives in `src/graphics/shaders/`.
 - **Utils** (`src/utils/`) — `Time` class for elapsed/delta time tracking, `shader-url-codec` for shareable URL
   encoding/decoding, general utilities
 - **Editor** (`src/components/editor/monaco-editor.tsx`) — tab-based Monaco editor with WGSL language support
-- **Default shaders** (`src/shaders/`) — `.wgsl` files imported as strings via `vite-plugin-string`, named as
-  `{renderer}.{stage}.{template}.wgsl`
+- **Default shaders** (`src/shaders/`) — `.wgsl` files imported as strings via `vite-plugin-string`. Organized as
+  `{renderer}/{template}/{stage}.wgsl` (e.g. `canvas/sdf/fragment.wgsl`, `particle/gol/compute.wgsl`). Shared files
+  live at the renderer root (`particle/default-background.wgsl`) or shaders root (`uniforms.wgsl`).
 
 ### Shared Types
 

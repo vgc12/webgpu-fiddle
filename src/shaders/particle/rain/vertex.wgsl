@@ -16,13 +16,13 @@ fn hash(n: u32) -> f32 {
     return fract(sin(f32(n) * 78.233) * 43758.5453);
 }
 
-const quadVerts: array<vec2f, 6> = array<vec2f, 6>(
-    vec2f(-1, -1),
-    vec2f(-1,  1),
-    vec2f( 1, -1),
-    vec2f(-1,  1),
-    vec2f( 1,  1),
-    vec2f( 1, -1),
+const quadArray: array<vec2f, 6> = array<vec2f, 6>(
+    vec2f(0, 0),
+    vec2f(0, 1),
+    vec2f(1, 0),
+    vec2f(0, 1),
+    vec2f(1, 1),
+    vec2f(1, 0),
 );
 
 @vertex
@@ -51,7 +51,7 @@ fn vertexMain(
     let perp = vec2f(-dir.y, dir.x);
 
     // Stretch quad: x axis = perpendicular (width), y axis = velocity (length)
-    let local = quadVerts[vertexIndex];
+    let local = quadArray[vertexIndex];
     let offset = perp * local.x * width + dir * local.y * streakLen;
 
     let posPixels = p.position * uniforms.resolution + offset;

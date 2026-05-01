@@ -7,7 +7,6 @@ struct Uniforms {
     deltaTime: f32,        // seconds elapsed since the previous frame
 }
 
-// Bind the uniform buffer at group 0, binding 0 (reserved by the app)
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
 // Private copies of each uniform field so shaders can write just

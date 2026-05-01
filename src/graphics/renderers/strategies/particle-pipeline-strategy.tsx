@@ -3,7 +3,7 @@ import type {GPUResourceManager} from "@/graphics/gpu-resource-manager.tsx";
 import type {ShaderConfig} from "@/graphics/shaders/shader-config.tsx";
 import {ComputePipelineBuilder} from "@/graphics/pipelines/compute-pipeline-builder.tsx";
 import {RenderPipelineBuilder} from "@/graphics/pipelines/render-pipeline-builder.tsx";
-import canvasVertexShader from '@/shaders/canvas.vertex.blank.wgsl';
+import canvasVertexShader from '@/shaders/canvas/blank/vertex.wgsl';
 import {injectUniformsIntoShader} from "@/graphics/shaders/shader-builder.tsx";
 
 // Pipeline strategy for particle renderers. Builds a compute pipeline, a render
