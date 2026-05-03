@@ -31,6 +31,8 @@ A browser-based WebGPU shader editor and renderer. Write WGSL shaders in a Monac
 - Node.js 18+
 - A browser with [WebGPU support](https://caniuse.com/webgpu) (Chrome 113+, Edge 113+, Firefox Nightly)
 
+> **Known Issue:** Firefox on Linux may crash (segfault in Mesa radv) when resizing the canvas. This is a driver-level bug in Mesa's Vulkan implementation and cannot be worked around from the application. Chromium-based browsers on Linux are unaffected.
+
 ### Setup
 
 ```bash

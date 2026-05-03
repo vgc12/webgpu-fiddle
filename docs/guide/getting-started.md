@@ -8,37 +8,36 @@
 - A **GPU** with up-to-date drivers. Any GPU that the browser exposes to WebGPU will work, including **integrated graphics** (Intel UHD/Iris, AMD Radeon Graphics, Apple Silicon, etc.). A discrete GPU is not required. Compute-heavy templates like Game of Life will simply run at lower frame rates on weaker integrated GPUs.
 
 ::: tip
-To check if your browser supports WebGPU, open the developer console and run `navigator.gpu`. If it returns `undefined`, your browser does not support WebGPU.
+To check if your browser supports WebGPU, open the developer console and run `navigator.gpu`. If it returns `undefined`, your browser does not support WebGPU or it needs to be enabled manually.
 :::
 
-::: tip Linux users
-For the best WebGPU experience on Linux, launch your browser with the Vulkan backend, :
+### Enabling WebGPU
 
-**Chromium-based browsers:**
-```bash
-google-chrome --enable-features=Vulkan
-# or
-chromium --enable-features=Vulkan
-```
+#### Chromium-based browsers (Chrome, Edge, Brave, etc.)
 
-**Firefox-based browsers (Firefox, Zen, LibreWolf, etc.):**
-```bash
-MOZ_ENABLE_VULKAN=1 firefox
-# or
-MOZ_ENABLE_VULKAN=1 zen-browser
-```
+WebGPU is enabled by default in Chrome 113+ and Edge 113+. If it isn't working:
 
-Without this, your browser may fall back to an OpenGL-based backend that has limited WebGPU support or lower performance.
+1. Open the flags page:
+   - **Chrome:** `chrome://flags`
+   - **Edge:** `edge://flags`
+   - **Brave:** `brave://flags`
+2. Search for **Unsafe WebGPU** and set it to **Enabled**.
+3. **Linux users:** Also search for **Vulkan** and set it to **Enabled**. Without this, the browser may fall back to an OpenGL-based backend with limited WebGPU support or lower performance.
+4. Restart the browser.
 
-Firefox users will also need to enable WebGPU itself: open `about:config`, search for `dom.webgpu.enabled`, and set it to `true`.
-:::
+#### Firefox-based browsers (Firefox, Zen, LibreWolf, etc.)
 
-::: warning Firefox + Linux + NVIDIA
-The combination of **Firefox on Linux with an NVIDIA GPU** is known to have issues running this project out of the box. The canvas may fail to render, render incorrectly, or crash the tab. If you hit this:
+WebGPU may not be enabled by default in Firefox. To enable it:
 
-- Launch Firefox with the Vulkan backend as shown above (`MOZ_ENABLE_VULKAN=1 firefox`).
-- Make sure the proprietary NVIDIA drivers are installed and up to date (the open `nouveau` driver does not have working WebGPU support).
-- If it still doesn't work, use a Chromium-based browser (Chrome, Chromium, Edge, Brave, etc.) instead, those have more reliable WebGPU support on Linux + NVIDIA.
+1. Open `about:config` in the address bar.
+2. Search for `dom.webgpu.enabled` and set it to `true`.
+3. Optionally, search for `gfx.webgpu.force-enabled` and set it to `true` if WebGPU still isn't available after enabling the first flag.
+4. Restart the browser.
+
+::: warning Firefox + Linux
+Resizing the canvas on **Firefox (and derivatives like Zen) on Linux** may crash the browser due to a driver-level bug in Firefox's WebGPU implementation on Linux. This affects both AMD (Mesa radv) and NVIDIA GPUs and cannot be worked around from the application. Chromium-based browsers on Linux are unaffected.
+
+If you experience crashes or rendering failures on Firefox + Linux, use a Chromium-based browser (Chrome, Chromium, Edge, Brave, etc.) instead.
 :::
 
 ::: tip Safari users
