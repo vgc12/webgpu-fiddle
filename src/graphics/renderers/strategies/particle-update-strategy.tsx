@@ -3,9 +3,7 @@ import type {IResourceStrategy, IUpdateStrategy} from "@/graphics/renderers/stra
 import {calculateWorkgroupCount} from "@/graphics/utils/workgroup-utils.tsx";
 import {PingPongBindGroups} from "@/graphics/renderers/bind-groups/ping-pong-bind-groups.tsx";
 
-// Update strategy for particle renderers. Each frame: selects the next ping-pong
-// bind group, dispatches the compute shader with the calculated workgroup count,
-// then calls postUpdate() on the resource strategy to swap the input/output buffers.
+/** Update strategy for particle renderers. Each frame: selects the next ping-pong bind group, dispatches the compute shader with the calculated workgroup count, then calls postUpdate() on the resource strategy to swap the input/output buffers. */
 export class ParticleComputeUpdateStrategy implements IUpdateStrategy {
     private pingPong: PingPongBindGroups;
 
@@ -15,11 +13,13 @@ export class ParticleComputeUpdateStrategy implements IUpdateStrategy {
         private particleCount: number
     ) {}
 
+    /** Lazily initializes the ping-pong bind groups from the resource strategy. */
     initialize(): void {
         const bindGroups = this.resourceStrategy.BindGroups.compute;
         this.pingPong = new PingPongBindGroups(bindGroups as [GPUBindGroup, GPUBindGroup]);
     }
 
+    /** Dispatches the compute shader for one frame, then swaps the ping-pong buffers. */
     update(encoder: GPUCommandEncoder, pipeline: GPUComputePipeline): void {
         if (!this.pingPong) {
             this.initialize();

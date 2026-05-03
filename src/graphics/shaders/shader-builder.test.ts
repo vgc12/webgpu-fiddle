@@ -4,7 +4,6 @@ import {
     getWorkgroupSize,
     injectUniformsIntoShader,
     parseAllStructsFromWGSL,
-    parseStructFromWGSL,
     getStructFromBufferBinding,
 } from './shader-builder.tsx';
 
@@ -125,23 +124,6 @@ struct B { y: u32, z: i32 }`;
     });
 });
 
-describe('parseStructFromWGSL', () => {
-    it('parses a named struct', () => {
-        const wgsl = `struct Particle { pos: vec2<f32>, vel: vec2<f32> }`;
-        const result = parseStructFromWGSL(wgsl, 'Particle');
-
-        expect(result).not.toBeNull();
-        expect(result!.fields).toHaveLength(2);
-        expect(result!.fields[0]).toMatchObject({name: 'pos', type: 'vec2<f32>', offset: 0});
-        expect(result!.fields[1]).toMatchObject({name: 'vel', type: 'vec2<f32>', offset: 8});
-        expect(result!.size).toBe(16);
-    });
-
-    it('returns null for non-existent struct', () => {
-        const result = parseStructFromWGSL('struct Other { x: f32 }', 'Missing');
-        expect(result).toBeNull();
-    });
-});
 
 describe('getStructFromBufferBinding', () => {
     it('finds struct from uniform binding', () => {

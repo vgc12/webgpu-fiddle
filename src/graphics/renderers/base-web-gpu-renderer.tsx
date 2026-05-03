@@ -67,14 +67,18 @@ export abstract class BaseWebGPURenderer implements IRenderer {
         this.initialized = true;
     }
 
+    /** Replaces the current shaders and rebuilds pipelines (and optionally buffers). */
     abstract recompileShaders(newShaderConfig: ShaderConfig, options?: any): Promise<void>;
 
-    // Template methods - subclasses must implement
+    /** Creates GPU buffers, bind groups, and other resources needed before rendering. */
     protected abstract initializeResources(): void;
 
+    /** Per-frame callback invoked by the animation controller. */
     protected abstract update(): void;
 
+    /** Releases GPU resources created during initializeResources(). */
     protected abstract cleanup(): void;
 
+    /** Builds the render (and optionally compute) pipelines from the current shader config. */
     protected abstract createPipelines(): Promise<void>;
 }

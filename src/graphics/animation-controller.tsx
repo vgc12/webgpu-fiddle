@@ -1,25 +1,27 @@
-﻿// Manages the requestAnimationFrame render loop.
-// The renderer calls start() with a per-frame callback, and stop() to pause.
-// Each frame, the callback is invoked and then the next frame is scheduled.
+﻿/** Manages the requestAnimationFrame render loop with start/stop control. */
 export class AnimationController {
     private animationFrameId: number | null = null;
     private isRunning: boolean = false;
 
-    // Begin the animation loop. The callback runs once per frame.
+    /** Begin the animation loop. The callback runs once per frame. */
     start(callback: () => void): void {
         if (this.isRunning) return;
         this.isRunning = true;
         this.animate(callback);
     }
 
-    // Recursive frame scheduler: runs the callback, then requests the next frame.
+    /** Recursive frame scheduler: runs the callback, then requests the next frame. */
     private animate(callback: () => void): void {
         if (!this.isRunning) return;
-        callback();
+        try {
+            callback();
+        } catch (e) {
+            console.error('Error in animation frame:', e);
+        }
         this.animationFrameId = requestAnimationFrame(() => this.animate(callback));
     }
 
-    // Cancel the current animation frame and stop the loop.
+    /** Cancel the current animation frame and stop the loop. */
     stop(): void {
         this.isRunning = false;
         if (this.animationFrameId !== null) {

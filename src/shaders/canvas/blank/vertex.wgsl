@@ -21,7 +21,7 @@ fn vertexMain(
     var output: VertexOutput;
     let v : vec2f = triangleVertices[vertexIndex];           // look up this vertex's 2D position
     output.position = vec4<f32>(
-        v.x,   // clip-space x (far outside -1..1, will be clipped)
+        v.x,   // clip-space x (far outside -1 -> 1, will be clipped)
         v.y,   // clip-space y
         0.0,   // depth (not used for full-screen effects)
         1.0    // w component (required for homogeneous coordinates)

@@ -1,8 +1,6 @@
 ﻿/**
  * Generate documentation/hints for Monaco editor
  */
-
-
 function generateUniformDocumentation() {
     const lines: string[] = [
         '\n\n// Available uniform variables in your shader:',
@@ -15,7 +13,11 @@ function generateUniformDocumentation() {
     return lines.join('\n');
 }
 
-export function generateVariableDocumentation(shaderType: 'compute' | 'vertex' | 'fragment' | 'background', renderType: 'canvas' | 'particle'): string {
+/**
+ * Adds appropriate documentation in the monaco editor telling the user what is available in their shader type.
+ * @param shaderType The type of shader (Compute, Vertex, Fragment, Background).
+ */
+export function generateVariableDocumentation(shaderType: 'compute' | 'vertex' | 'fragment' | 'background'): string {
     const lines: string[] = ['// Available variables in your main() function:'];
 
     if (shaderType === 'compute') {
@@ -25,10 +27,6 @@ export function generateVariableDocumentation(shaderType: 'compute' | 'vertex' |
     } else if (shaderType === 'vertex') {
         lines.push('// vertexIndex: u32 - Index of the current vertex');
         lines.push('// instanceIndex: u32 - Index of the current instance');
-        if(renderType === 'particle') {
-            lines.push('// particlePos: vec2<f32> - Position of the particle');
-            lines.push('// particleVel: vec2<f32> - Velocity of the particle');
-        }
         lines.push('// output: VertexOutput - Set output.position and output.color');
     }
     else if (shaderType === 'fragment' || shaderType === 'background') {

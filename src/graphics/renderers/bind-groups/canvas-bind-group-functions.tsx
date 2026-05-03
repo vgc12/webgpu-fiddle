@@ -1,13 +1,12 @@
 import type {UniformBuffer} from "@/graphics/pipelines/input-output-buffers.tsx";
 
-// Creates bind group layouts and bind groups for the canvas renderer.
-// Canvas only needs the uniform buffer at binding 0, visible to vertex + fragment stages.
-
+/** Configuration for creating canvas renderer bind groups. */
 export interface CanvasBindGroupConfig {
     uniformBuffer: UniformBuffer;
     device: GPUDevice;
 }
 
+/** Creates a bind group for the canvas renderer with the uniform buffer at binding 0. */
 export function createCanvasRenderBindGroup(config: CanvasBindGroupConfig, layout: GPUBindGroupLayout): GPUBindGroup {
     return config.device.createBindGroup({
         label: 'Canvas Render BindGroup',
@@ -19,6 +18,7 @@ export function createCanvasRenderBindGroup(config: CanvasBindGroupConfig, layou
 }
 
 
+/** Creates the bind group layout for the canvas renderer (uniform buffer visible to vertex + fragment). */
 export function createCanvasRenderLayout(device: GPUDevice): GPUBindGroupLayout {
     return device.createBindGroupLayout({
         label: 'Canvas Render Layout',

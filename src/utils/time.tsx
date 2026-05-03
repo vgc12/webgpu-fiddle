@@ -1,3 +1,6 @@
+/**
+ * A class meant to handle keeping track of time and frames
+ */
 export class Time {
     private lastFrameTime: number = 0;
     private deltaTime: number = 0;

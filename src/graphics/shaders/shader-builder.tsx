@@ -128,6 +128,75 @@ export interface StructInfo {
     alignment: number; // Struct alignment
 }
 
+
+
+
+/** Find the @binding declaration for a variable name (e.g. 'input'), extract its
+ type (unwrapping array<T> if needed), and return the matching parsed struct.
+*/
+export function getStructFromBufferBinding(wgslCode: string, bindingName: string): StructInfo | null {
+    // First, parse all structs
+    const allStructs = parseAllStructsFromWGSL(wgslCode);
+
+    // Find the binding and extract its type
+    const bindingRegex = new RegExp(
+        `@group\\(\\d+\\)\\s+@binding\\(\\d+\\)\\s+var<(?:uniform|storage)(?:,\\s*(?:read|read_write))?>\\s+${bindingName}\\s*:\\s*([^;]+);`,
+        's'
+    );
+
+    const match = wgslCode.match(bindingRegex);
+    if (!match) {
+        console.warn(`Could not find binding: ${bindingName}`);
+        return null;
+    }
+
+    const dataType = match[1].trim();
+
+    // Extract element type if it's an array
+    const arrayMatch = dataType.match(/array<(.+)>/);
+    const structName = arrayMatch ? arrayMatch[1].trim() : dataType;
+
+    // Look up the struct
+    const structInfo = allStructs.get(structName);
+    if (!structInfo) {
+        console.warn(`Could not find struct definition for: ${structName}`);
+        return null;
+    }
+
+    return structInfo;
+}
+
+
+/** Find all struct definitions in WGSL code and return a map of name to parsed info.
+ *
+ * @param wgslCode The shader code from a shader
+ */
+export function parseAllStructsFromWGSL(wgslCode: string): Map<string, StructInfo> {
+    const structs = new Map<string, StructInfo>();
+
+    // Find all struct definitions
+    const structRegex = /struct\s+(\w+)\s*{([^}]*)}/gs;
+
+    let match;
+    while ((match = structRegex.exec(wgslCode)) !== null) {
+        const structName = match[1];
+        const structBody = match[2];
+
+        const structInfo = parseStructFields(structName, structBody);
+
+        if (structInfo) {
+            structs.set(structName, structInfo);
+        }
+    }
+
+    return structs;
+}
+
+/**
+ * Parses a struct and gets information about the fields from theme.
+ * @param structName Name of the struct.
+ * @param structBody A string that contains the full struct code.
+ */
 function parseStructFields(structName: string, structBody: string): StructInfo | null {
     // Parse fields: name: type,
     const fieldRegex = /(\w+)\s*:\s*([^,\n]+)/g;
@@ -181,125 +250,12 @@ function parseStructFields(structName: string, structBody: string): StructInfo |
 }
 
 
-// Round offset up to the next multiple of alignment.
+/** Round offset up to the next multiple of alignment.
+ *
+ * @param offset The value to be aligned.
+ * @param alignment The alignment boundary (must be a positive integer).
+ * @returns The smallest multiple of `alignment` that is greater than or equal to `offset`.
+ */
 export function alignTo(offset: number, alignment: number): number {
     return Math.ceil(offset / alignment) * alignment;
-}
-
-// Find all struct definitions in WGSL code and return a map of name to parsed info.
-export function parseAllStructsFromWGSL(wgslCode: string): Map<string, StructInfo> {
-    const structs = new Map<string, StructInfo>();
-
-    // Find all struct definitions
-    const structRegex = /struct\s+(\w+)\s*{([^}]*)}/gs;
-
-    let match;
-    while ((match = structRegex.exec(wgslCode)) !== null) {
-        const structName = match[1];
-        const structBody = match[2];
-
-        const structInfo = parseStructFields(structName, structBody);
-
-        if (structInfo) {
-            structs.set(structName, structInfo);
-        }
-    }
-
-    return structs;
-}
-
-// Find the @binding declaration for a variable name (e.g. 'input'), extract its
-// type (unwrapping array<T> if needed), and return the matching parsed struct.
-export function getStructFromBufferBinding(wgslCode: string, bindingName: string): StructInfo | null {
-    // First, parse all structs
-    const allStructs = parseAllStructsFromWGSL(wgslCode);
-
-    // Find the binding and extract its type
-    const bindingRegex = new RegExp(
-        `@group\\(\\d+\\)\\s+@binding\\(\\d+\\)\\s+var<(?:uniform|storage)(?:,\\s*(?:read|read_write))?>\\s+${bindingName}\\s*:\\s*([^;]+);`,
-        's'
-    );
-
-    const match = wgslCode.match(bindingRegex);
-    if (!match) {
-        console.warn(`Could not find binding: ${bindingName}`);
-        return null;
-    }
-
-    const dataType = match[1].trim();
-
-    // Extract element type if it's an array
-    const arrayMatch = dataType.match(/array<(.+)>/);
-    const structName = arrayMatch ? arrayMatch[1].trim() : dataType;
-
-    // Look up the struct
-    const structInfo = allStructs.get(structName);
-    if (!structInfo) {
-        console.warn(`Could not find struct definition for: ${structName}`);
-        return null;
-    }
-
-    return structInfo;
-}
-
-
-// Parse a single named struct definition from WGSL code. Returns null if not found.
-export function parseStructFromWGSL(wgslCode: string, structName: string): StructInfo | null {
-    // Regex to find struct definition
-    const structRegex = new RegExp(
-        `struct\\s+${structName}\\s*{([^}]*)}`,
-        's'
-    );
-
-    const match = wgslCode.match(structRegex);
-    if (!match) {
-        return null;
-    }
-
-    const structBody = match[1];
-
-    // Parse fields: name: type,
-    const fieldRegex = /(\w+)\s*:\s*([^,]+),?/g;
-    const fields: StructField[] = [];
-    let currentOffset = 0;
-    let maxAlignment = 1;
-
-    let fieldMatch;
-    while ((fieldMatch = fieldRegex.exec(structBody)) !== null) {
-        const fieldName = fieldMatch[1].trim();
-        let fieldType = fieldMatch[2].trim();
-
-        // Remove trailing comma if present
-        fieldType = fieldType.replace(/,$/, '').trim();
-
-        const typeInfo = TypeInfo[fieldType];
-        if (!typeInfo) {
-            console.warn(`Unknown type: ${fieldType} for field ${fieldName}`);
-            continue;
-        }
-
-        // Align current offset to field's alignment requirement
-        currentOffset = alignTo(currentOffset, typeInfo.alignment);
-
-        fields.push({
-            name: fieldName,
-            type: fieldType,
-            size: typeInfo.size,
-            alignment: typeInfo.alignment,
-            offset: currentOffset,
-        });
-
-        currentOffset += typeInfo.size;
-        maxAlignment = Math.max(maxAlignment, typeInfo.alignment);
-    }
-
-    // Final struct size must be aligned to its largest member alignment
-    const totalSize = alignTo(currentOffset, maxAlignment);
-
-    return {
-        name: structName,
-        fields,
-        size: totalSize,
-        alignment: maxAlignment,
-    };
 }

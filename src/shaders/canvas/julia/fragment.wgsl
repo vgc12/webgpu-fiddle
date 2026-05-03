@@ -7,8 +7,8 @@ fn fragmentMain(
     // Dividing by resolution.y keeps the aspect ratio correct.
     let uv = (vec2f(fragCoord.x, resolution.y - fragCoord.y) * 2.0 - resolution) / resolution.y;
 
-    let zoom = 1.5;          // scale factor controlling how much of the fractal is visible
-    var z = uv * zoom;       // initial complex number z = pixel position in the complex plane
+    let zoom = 1.5; // scale factor controlling how much of the fractal is visible
+var z = uv * zoom; // initial complex number z = pixel position in the complex plane
 
     // Animate the constant c along a smooth looping path through the complex plane.
     // Different c values produce dramatically different fractal patterns.
@@ -19,7 +19,7 @@ fn fragmentMain(
     );
 
     var i = 0;
-    let maxIter = 300;       // iteration limit; points that survive this many are "in the set"
+    let maxIter = 300; // iteration limit; points that survive this many are "in the set"
 
     // Iterate z = z^2 + c.
     // Complex squaring: (a+bi)^2 = (a^2 - b^2) + (2ab)i
@@ -37,7 +37,7 @@ fn fragmentMain(
     // Smooth iteration count: removes visible banding from raw integer iteration values.
     // log2(log2(|z|^2)) corrects for how far past the escape threshold z traveled.
     let sl = f32(i) - log2(log2(dot(z, z))) + 4.0;
-    let n = sl / f32(maxIter);   // normalize to 0..1 range
+    let n = sl / f32(maxIter); // normalize to 0..1 range
 
     // Cosine palette: cycles through hues smoothly based on the normalized iteration count.
     // The constants (3.0, 3.5, 4.0) offset each RGB channel for color variety.

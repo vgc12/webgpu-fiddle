@@ -1,6 +1,4 @@
-// Alternates between two bind groups each frame for compute ping-pong.
-// getNext() returns the current bind group and advances to the other,
-// so each frame the compute shader reads/writes with swapped buffers.
+/** Alternates between two bind groups each frame for compute ping-pong. getNext() returns the current bind group and advances, so each frame the compute shader reads/writes with swapped buffers. */
 export class PingPongBindGroups {
     private current = 0;
 

@@ -250,7 +250,7 @@ src/
         particle-update-strategy.tsx      Compute dispatch + buffer swap
     shaders/
       shader-builder.tsx     Uniform injection, struct parsing
-      shader-config.tsx      ShaderConfig type + preset configs
+      shader-config.tsx      ShaderConfig type definition
       shader-validator.tsx   GPU compilation + error remapping
       generate-variable-documentation.tsx  Editor doc comments
       extract-function-body.tsx            Extract function body from WGSL

@@ -14,14 +14,13 @@ fn gridSize() -> u32 {
     return u32(sqrt(f32(arrayLength(&input))));
 }
 
-// Look up a cell's state with wrapping (toroidal topology).
-// The double-modulo ((x % gs) + gs) % gs handles negative indices correctly,
-// since WGSL's % can return negative values for negative inputs.
+// Look up a cell's state. Out-of-bounds cells are treated as dead.
 fn getCell(x: i32, y: i32) -> u32 {
     let gs = i32(gridSize());
-    let wx = ((x % gs) + gs) % gs;                     // wrap x into [0, gs)
-    let wy = ((y % gs) + gs) % gs;                     // wrap y into [0, gs)
-    return input[u32(wy) * gridSize() + u32(wx)].state; // convert 2D coords to 1D buffer index
+    if (x < 0 || x >= gs || y < 0 || y >= gs) {
+        return 0u;
+    }
+    return input[u32(y) * gridSize() + u32(x)].state;
 }
 
 // 2D workgroup: 8x8 = 64 threads, matching the 2D grid structure

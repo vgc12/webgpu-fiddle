@@ -57,16 +57,6 @@ Finds all `struct` definitions in WGSL code and returns a map of struct name to 
 
 ---
 
-#### `parseStructFromWGSL`
-```ts
-function parseStructFromWGSL(wgslCode: string, structName: string): StructInfo | null
-```
-Parses a single struct definition by name. Returns `null` if the struct is not found.
-
-**Source:** `src/graphics/shaders/shader-builder.tsx`
-
----
-
 #### `getStructFromBufferBinding`
 ```ts
 function getStructFromBufferBinding(wgslCode: string, bindingName: string): StructInfo | null
@@ -90,11 +80,10 @@ Rounds `offset` up to the next multiple of `alignment`.
 #### `generateVariableDocumentation`
 ```ts
 function generateVariableDocumentation(
-    shaderType: 'compute' | 'vertex' | 'fragment' | 'background',
-    renderType: 'canvas' | 'particle'
+    shaderType: 'compute' | 'vertex' | 'fragment' | 'background'
 ): string
 ```
-Generates documentation comments listing available variables for a given shader stage and render type.
+Generates documentation comments listing available variables for a given shader stage.
 
 **Source:** `src/graphics/shaders/generate-variable-documentation.tsx`
 
@@ -103,8 +92,7 @@ Generates documentation comments listing available variables for a given shader 
 #### `buildInitialShaders`
 ```ts
 function buildInitialShaders(
-    config: ShaderConfig,
-    renderType: 'canvas' | 'particle'
+    config: ShaderConfig
 ): Record<tab_id, string>
 ```
 Prepends auto-generated documentation comments to each shader stage from a `ShaderConfig`.
@@ -457,19 +445,19 @@ Writes a complete struct instance to a `DataView` at the given byte offset, usin
 ```ts
 function randomValueForType(baseType: base_type): number
 ```
-Returns a random value appropriate for the given base type. `f32` returns a value in `[-1, 1)`, integer types return `0` or `1`.
+Returns a random value appropriate for the given base type. `f32` returns a value in `[0, 1)`, integer types return `0` or `1` (biased 65% toward `0`).
 
 ---
 
 #### `jsonValueSource`
 ```ts
 function jsonValueSource(
+    sourceIndex: number,
     jsonData: any[],
-    instanceIndex: number,
     isSingleField: boolean
 ): value_source
 ```
-Creates a `value_source` callback that reads values from parsed JSON data for a given struct instance index.
+Creates a `value_source` callback that reads values from parsed JSON data. `sourceIndex` is the remapped index into `jsonData` (`-1` means out of bounds).
 
 ---
 
@@ -582,9 +570,10 @@ Manages `requestAnimationFrame` lifecycle for the rendering loop.
 ```ts
 function useShaderCompilation(
     shaderConfig: ShaderConfig,
-    shaderType: 'canvas' | 'particle',
+    renderType: 'canvas' | 'particle',
     renderSettings: render_settings,
-    rendererRef: React.RefObject<IRenderer | null>
+    rendererRef: React.RefObject<IRenderer | null>,
+    sharedShaders?: Record<tab_id, string>
 ): {
     activeTab: tab_id;
     setActiveTab: (tab: tab_id) => void;

@@ -63,7 +63,7 @@ export function RenderSettings({renderSettings, onConfirm}: {
                                file:bg-neutral-200 dark:file:bg-neutral-700 file:text-sm"
                 />
                 {fileError && <p className="text-xs text-red-500">{fileError}</p>}
-                {particleData && <p className="text-xs text-green-500"> File loaded ({particleCount} particles)</p>}
+                {particleData && <p className="text-xs text-green-500">File loaded ({particleData.length} entries)</p>}
             </div>
             <button
                 className="mt-2 px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-medium"

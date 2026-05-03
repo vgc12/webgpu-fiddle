@@ -20,6 +20,9 @@ export type render_settings = {
     initialData: any[] | null;
 }
 
+/**
+ * A type used for templatye information
+ */
 export type template_def = {
     name: string;
     description: string;

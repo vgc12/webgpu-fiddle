@@ -1,3 +1,4 @@
+// AI has been used for generating REGEX throughout this file.
 // Helpers for writing structured data into ArrayBuffers. Used to populate GPU
 // storage buffers from JSON or random data when initializing particle buffers.
 
@@ -43,10 +44,10 @@ export function resolveFieldValue(fieldValue: any, componentIndex: number, compo
     return Array.isArray(fieldValue) && componentIndex < fieldValue.length ? fieldValue[componentIndex] : 0;
 }
 
-// Generate a random value for the given base type.
-// f32: [-1, 1), u32/i32: 0 or 1 (roughly 35% chance of 1).
+/** Generate a random value for the given base type between 0 and 1.
+*/
 export function randomValueForType(baseType: base_type): number {
-    return baseType === 'f32' ? Math.random() * 2 - 1 : (Math.random() > 0.65 ? 1 : 0);
+    return baseType === 'f32' ? Math.random()  : (Math.random() > 0.65 ? 1 : 0);
 }
 
 // Write one complete struct instance into a DataView at the given byte offset,
@@ -65,8 +66,9 @@ export function writeStructInstance(view: DataView, structOffset: number, fields
 // Create a value_source callback that reads values from parsed JSON data.
 // For single-field structs, the JSON entry is the value directly.
 // For multi-field structs, the entry is an object keyed by field index.
-export function jsonValueSource(jsonData: any[], instanceIndex: number, isSingleField: boolean): value_source {
-    const instance = instanceIndex < jsonData.length ? jsonData[instanceIndex] : null;
+// sourceIndex is the remapped index into jsonData (-1 means out of bounds).
+export function jsonValueSource(sourceIndex: number, jsonData: any[], isSingleField: boolean): value_source {
+    const instance = sourceIndex >= 0 && sourceIndex < jsonData.length ? jsonData[sourceIndex] : null;
 
     return (fieldIndex, componentIndex, count, _baseType) => {
         const fieldValue = instance == null

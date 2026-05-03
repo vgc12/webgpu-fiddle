@@ -1,7 +1,6 @@
 import type {IRenderStrategy} from "@/graphics/renderers/strategies/rendering-strategies.tsx";
 
-// Render strategy for canvas renderers. Begins a render pass that clears to black,
-// sets the pipeline and bind group, draws the specified vertex/instance count, and ends.
+/** Render strategy for canvas renderers. Begins a render pass that clears to black, sets the pipeline and bind group, draws the specified vertex/instance count, and ends. */
 export class CanvasRenderStrategy implements IRenderStrategy {
     render(
         encoder: GPUCommandEncoder,

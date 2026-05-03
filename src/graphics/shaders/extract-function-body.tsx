@@ -1,10 +1,12 @@
-﻿/**
+﻿//AI was used here for comments and to generate the regular expressions for the documentation here.
+
+/**
  * Extracts the body of a function from user code
  * Strips the function declaration and braces, returning just the inner code
  * Handles functions with or without parameters and return types
  *
- * @param userCode - User's shader code containing a function
- * @param functionName - Name of the function to extract (defaults to 'main')
+ * @param userCode User's shader code containing a function
+ * @param functionName Name of the function to extract (defaults to 'main')
  * @returns The code inside the function body
  *
  * @example

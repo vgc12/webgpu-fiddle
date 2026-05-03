@@ -3,8 +3,7 @@ import type {GPUResourceManager} from "@/graphics/gpu-resource-manager.tsx";
 import type {ShaderConfig} from "@/graphics/shaders/shader-config.tsx";
 import {RenderPipelineBuilder} from "@/graphics/pipelines/render-pipeline-builder.tsx";
 
-// Pipeline strategy for canvas renderers. Compiles vertex + fragment shader modules
-// and builds a single render pipeline with triangle-list topology.
+/** Pipeline strategy for canvas renderers. Compiles vertex + fragment shader modules and builds a single render pipeline with triangle-list topology. */
 export class CanvasPipelineStrategy implements IPipelineStrategy {
     async createPipelines(
         device: GPUDevice,

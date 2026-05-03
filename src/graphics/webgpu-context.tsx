@@ -1,7 +1,4 @@
-﻿// Handles all WebGPU initialization for a given canvas element.
-// Requests the GPU adapter and device, configures the canvas context with the
-// preferred texture format, and exposes the initialized objects to the renderer.
-// Created by BaseWebGPURenderer during its initialize() step.
+﻿/** Handles WebGPU initialization for a canvas, exposing the adapter, device, and context. */
 export class WebGPUContext {
     private adapter: GPUAdapter | null = null;
     private device: GPUDevice | null = null;
@@ -11,7 +8,7 @@ export class WebGPUContext {
     constructor(private canvas: HTMLCanvasElement) {
     }
 
-    // Perform the async GPU setup: adapter -> device -> canvas context configuration.
+    /** Perform the async GPU setup: adapter, device, and canvas context configuration. */
     async initialize(): Promise<void> {
         if (!navigator.gpu) {
             throw new Error('WebGPU is not supported on this browser');
@@ -50,9 +47,7 @@ export class WebGPUContext {
         return this.format;
     }
 
-    // Re-bind the device to the canvas after the canvas drawing buffer changes
-    // size. Firefox invalidates the configured swap chain on canvas.width/height
-    // change and requires a fresh configure() before the next getCurrentTexture().
+    /** Re-bind the device to the canvas after a drawing buffer size change. */
     reconfigure(): void {
         if (!this.context || !this.device) return;
         this.context.configure({
@@ -62,7 +57,7 @@ export class WebGPUContext {
         });
     }
 
-    // Release the GPU device and unconfigure the canvas context.
+    /** Release the GPU device and unconfigure the canvas context. */
     destroy(): void {
         this.device?.destroy();
         this.context?.unconfigure();

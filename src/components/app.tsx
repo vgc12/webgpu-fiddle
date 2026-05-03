@@ -6,7 +6,7 @@ import {TemplateSelector} from "@/components/template-selector.tsx";
 import {RenderSettings} from "@/components/render-settings.tsx";
 import type {template_def, render_settings, tab_id} from "@/types.tsx";
 import {TEMPLATES} from "@/templates.tsx";
-import {clearShareHash, decodeShareUrl} from "@/utils/shader-url-codec.tsx";
+import {clearShareHash, decodeShareUrl, fromSparse} from "@/utils/shader-url-codec.tsx";
 
 function App() {
     const [sharedState] = useState(() => {
@@ -16,7 +16,13 @@ function App() {
         if (!template) return null;
         return {
             template,
-            renderSettings: { ...shared.renderSettings, initialData: null },
+            renderSettings: {
+                vertexDrawCount: shared.renderSettings.vertexDrawCount,
+                instanceCount: shared.renderSettings.instanceCount,
+                initialData: shared.renderSettings.sparseData
+                    ? fromSparse(shared.renderSettings.sparseData)
+                    : null,
+            },
             shaders: shared.shaders,
         };
     });
@@ -35,7 +41,8 @@ function App() {
             initialData: null,
         }
     );
-    const [initialSharedShaders] = useState<Record<tab_id, string> | null>(sharedState?.shaders ?? null);
+    const [initialShaders, setInitialShaders] = useState<Record<tab_id, string> | null>(sharedState?.shaders ?? null);
+    const [workspaceKey, setWorkspaceKey] = useState(0);
     const [templateSelectorOpen, setTemplateSelectorOpen] = useState<boolean>(false);
     const [renderSettingsOpen, setRenderSettingsOpen] = useState<boolean>(false);
 
@@ -43,6 +50,8 @@ function App() {
         return <TemplateSelector onConfirm={(template) => {
             setSelectedTemplate(template);
             setRenderSettings(template.defaultRenderSettings);
+            setInitialShaders(null);
+            setWorkspaceKey(k => k + 1);
             setTemplateSelectorOpen(false);
         }}/>;
     } else if (renderSettingsOpen) {
@@ -59,14 +68,20 @@ function App() {
 
     return (
         <ShaderWorkspace
-            key={selectedTemplate.name}
+            key={workspaceKey}
             templateName={selectedTemplate.name}
             shaderType={selectedTemplate.shaderType}
             shaderConfig={selectedTemplate.shaderConfig}
             renderSettings={renderSettings}
-            initialUserShaders={initialSharedShaders}
+            initialUserShaders={initialShaders}
             onChangeTemplate={() => setTemplateSelectorOpen(true)}
             onChangeRenderSettings={() => setRenderSettingsOpen(true)}
+            onSwitchTemplate={(template, shaders) => {
+                setSelectedTemplate(template);
+                setRenderSettings(template.defaultRenderSettings);
+                setInitialShaders(shaders as Record<tab_id, string>);
+                setWorkspaceKey(k => k + 1);
+            }}
             darkMode={{isDarkMode, setIsDarkMode}}
         />
     );

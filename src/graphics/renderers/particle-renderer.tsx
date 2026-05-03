@@ -7,10 +7,11 @@ import type {render_settings} from "@/types.tsx";
 import {ParticlePipelineStrategy} from "@/graphics/renderers/strategies/particle-pipeline-strategy.tsx";
 import {ParticleResourceStrategy} from "@/graphics/renderers/strategies/particle-resource-strategy.tsx";
 
-// Renders instanced particles driven by a compute shader each frame.
-// Plugs in particle-specific strategies: ping-pong storage buffers, compute +
-// render pipelines, compute dispatch with buffer swap, and instanced drawing
-// with an optional background pass.
+/** Renders instanced particles driven by a compute shader each frame.
+ Plugs in particle-specific strategies: ping-pong storage buffers, compute +
+ render pipelines, compute dispatch with buffer swap, and instanced drawing
+ with an optional background pass.
+*/
 export class ParticleRenderer extends StrategyBasedRenderer {
     constructor(
         canvas: HTMLCanvasElement,
