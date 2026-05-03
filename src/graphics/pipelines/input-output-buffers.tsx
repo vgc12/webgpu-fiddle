@@ -1,6 +1,7 @@
 ﻿import {GPUResourceManager} from "@/graphics/gpu-resource-manager.tsx";
 import type {ComputeConfig} from "@/graphics/pipelines/compute-config.tsx";
 
+// Common interface for GPU buffer systems (uniform buffers and storage buffers).
 export interface IBufferSystem {
     initializeBuffers(): void;
 
@@ -9,6 +10,9 @@ export interface IBufferSystem {
     destroy(): void;
 }
 
+// Manages a single GPU uniform buffer (32 bytes) that holds per-frame data
+// (resolution, mouse position, aspect ratio, time, deltaTime).
+// Written to every frame by StrategyBasedRenderer.updateUniforms().
 export class UniformBuffer implements IBufferSystem {
     private uniformBuffer: GPUBuffer;
 
@@ -22,7 +26,7 @@ export class UniformBuffer implements IBufferSystem {
 
     initializeBuffers(): void {
         const usage: number = GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
-        this.uniformBuffer = this.resourceManager.createBuffer(24, usage, "Uniform Buffer")
+        this.uniformBuffer = this.resourceManager.createBuffer(32, usage, "Uniform Buffer")
     }
 
     writeBuffer(data: Float32Array<ArrayBuffer>) {
@@ -34,6 +38,10 @@ export class UniformBuffer implements IBufferSystem {
     }
 }
 
+// Double-buffered storage buffers for compute shader ping-pong.
+// Two identically-sized buffers (A and B) alternate between input and output roles.
+// After each compute dispatch, swap() flips which is input and which is output,
+// so the next frame reads from what was just written.
 export class InputOutputBuffers implements IBufferSystem {
     private bufferA: GPUBuffer;
     private bufferB: GPUBuffer;

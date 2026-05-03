@@ -13,8 +13,8 @@ template, edit vertex/fragment/compute shaders in a Monaco editor, and see resul
 - `npm run build` — TypeScript check (`tsc`) + Vite production build
 - `npm run lint` — ESLint (`.ts` files)
 - `npm run deploy` — Deploy to GitHub Pages via gh-pages
-
-No test runner is configured.
+- `npm run test` — Run tests once (vitest)
+- `npm run test:watch` — Run tests in watch mode (vitest)
 
 ## Path Alias
 
@@ -24,18 +24,18 @@ No test runner is configured.
 
 ### App Flow
 
-1. User selects a template from `TemplateSelector` (defined in `src/templates.tsx`)
+1. User selects a template from `TemplateSelector` (`src/components/template-selector.tsx`), which reads from the `TEMPLATES` array in `src/templates.tsx`
 2. `App` passes the template's `ShaderConfig`, shader type, and render settings to `ShaderWorkspace`
 3. `ShaderWorkspace` composes the Monaco editor and `WebGPUCanvas`, using `useShaderCompilation` hook for state
 4. `WebGPUCanvas` (`src/components/ui/main-canvas.tsx`) creates the appropriate renderer and exposes it via ref
 
 ### Rendering Pipeline (Template Method + Strategy)
 
-- **IRenderer** (`src/graphics/i-renderer.tsx`) — interface: `start()`, `stop()`, `recompileShaders()`, `destroy()`
+- **IRenderer** (`src/graphics/i-renderer.tsx`) — interface: `start()`, `stop()`, `resize()`, `recompileShaders()`, `destroy()`, readonly `device`
 - **BaseWebGPURenderer** (`src/graphics/renderers/`) — abstract base managing lifecycle (init → animate → update →
   destroy), owns `WebGPUContext`, `GPUResourceManager`, `AnimationController`, `Time`
 - **StrategyBasedRenderer** — composes four strategy interfaces (`IPipelineStrategy`, `IResourceStrategy`,
-  `IUpdateStrategy`, `IRenderStrategy`) defined in `src/graphics/renderers/rendering-strategies.tsx`
+  `IUpdateStrategy`, `IRenderStrategy`) defined in `src/graphics/renderers/strategies/rendering-strategies.tsx`
 - **CanvasRenderer** (`src/graphics/renderers/canvas-renderer.tsx`) — full-screen quad, no compute
 - **ParticleRenderer** (`src/graphics/renderers/particle-renderer.tsx`) — compute + render with ping-pong double
   buffering
@@ -52,10 +52,13 @@ No test runner is configured.
 - **Templates** (`src/templates.tsx`) — `TEMPLATES` array of `template_def`, each specifying shader type, `ShaderConfig`,
   and default render settings (vertex draw count, instance count, initial data)
 - **Hooks** (`src/hooks/`) — `useShaderCompilation` manages shader state, compilation, and renderer recompilation;
-  `useDarkMode` and `buildInitialShaders` are also here
+  `useDarkMode` is also here. `buildInitialShaders` lives in `src/graphics/shaders/`.
+- **Utils** (`src/utils/`) — `Time` class for elapsed/delta time tracking, `shader-url-codec` for shareable URL
+  encoding/decoding, general utilities
 - **Editor** (`src/components/editor/monaco-editor.tsx`) — tab-based Monaco editor with WGSL language support
-- **Default shaders** (`src/shaders/`) — `.wgsl` files imported as strings via `vite-plugin-string`, named as
-  `{renderer}.{stage}.{template}.wgsl`
+- **Default shaders** (`src/shaders/`) — `.wgsl` files imported as strings via `vite-plugin-string`. Organized as
+  `{renderer}/{template}/{stage}.wgsl` (e.g. `canvas/sdf/fragment.wgsl`, `particle/gol/compute.wgsl`). Shared files
+  live at the renderer root (`particle/default-background.wgsl`) or shaders root (`uniforms.wgsl`).
 
 ### Shared Types
 

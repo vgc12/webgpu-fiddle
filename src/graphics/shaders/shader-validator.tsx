@@ -1,4 +1,7 @@
- 
+// Compiles shaders on the GPU and returns diagnostics with line numbers
+// remapped from the injected full code back to the user's original code.
+
+// A single shader compilation diagnostic (error, warning, or info).
 export interface shader_diagnostic {
     line: number;
     column: number;
@@ -8,6 +11,9 @@ export interface shader_diagnostic {
 }
 
 
+// Compile the full (injected) shader on the GPU, collect any diagnostics,
+// and remap their line numbers back to the user's original code by subtracting
+// the prefix length and mid-function injection offsets.
 export async function validateShader(
     device: GPUDevice,
     userCode: string,

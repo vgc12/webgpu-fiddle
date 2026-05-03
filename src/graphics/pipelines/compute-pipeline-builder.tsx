@@ -1,4 +1,5 @@
-﻿export class ComputePipelineBuilder {
+﻿/** Fluent builder for GPUComputePipeline. Chain setLayout(), setShaderModule(), setEntryPoint(), then call build() or buildAsync(). */
+export class ComputePipelineBuilder {
     private layout: GPUPipelineLayout | 'auto' = 'auto';
     private shaderModule: GPUShaderModule | null = null;
     private entryPoint: string = 'main';
@@ -21,6 +22,7 @@
         return this;
     }
 
+    /** Creates the compute pipeline synchronously. Throws if no shader module is set. */
     build(): GPUComputePipeline {
         if (!this.shaderModule) {
             throw new Error('Shader module is required for compute pipeline');
@@ -35,6 +37,7 @@
         });
     }
 
+    /** Creates the compute pipeline asynchronously. Throws if no shader module is set. */
     buildAsync(): Promise<GPUComputePipeline> {
         if (!this.shaderModule) {
             throw new Error('Shader module is required for compute pipeline');

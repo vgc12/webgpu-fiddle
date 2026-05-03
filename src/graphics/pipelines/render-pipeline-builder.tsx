@@ -1,5 +1,6 @@
 ﻿import type {VertexBufferLayout} from "@/graphics/utils/vertex-buffer-layout.tsx";
 
+/** Fluent builder for GPURenderPipeline. Configure shader modules, entry points, topology, and format, then call build() or buildAsync(). */
 export class RenderPipelineBuilder {
     private layout: GPUPipelineLayout | 'auto' = 'auto';
     private vertexShaderModule: GPUShaderModule | null = null;
@@ -60,6 +61,7 @@ export class RenderPipelineBuilder {
         return this;
     }
 
+    /** Creates the render pipeline asynchronously. Throws if shader modules are missing. */
     buildAsync(): Promise<GPURenderPipeline> {
 
         const pld = this.getRenderPipelineDescriptor();
@@ -69,6 +71,7 @@ export class RenderPipelineBuilder {
         return this.device.createRenderPipelineAsync(pld);
     }
 
+    /** Creates the render pipeline synchronously. Throws if shader modules are missing. */
     build(): GPURenderPipeline {
         const pld = this.getRenderPipelineDescriptor();
         if (!pld) {
@@ -78,6 +81,7 @@ export class RenderPipelineBuilder {
         return this.device.createRenderPipeline(pld);
     }
 
+    /** Assembles the pipeline descriptor from the configured options. */
     private getRenderPipelineDescriptor(): GPURenderPipelineDescriptor | null {
         if (!this.vertexShaderModule) {
             throw new Error('Vertex shader module is required for render pipeline');

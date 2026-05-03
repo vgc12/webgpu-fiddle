@@ -1,70 +1,35 @@
-﻿// Draws a rectangle that covers the whole screen
 import {StrategyBasedRenderer} from "@/graphics/renderers/strategy-based-renderer.tsx";
-import {NullUpdateStrategy} from "@/graphics/renderers/particle-strategies.tsx";
 import type {ShaderConfig} from "@/graphics/shaders/shader-config.tsx";
-import {CanvasPipelineStrategy, CanvasRenderStrategy, CanvasResourceStrategy} from "@/graphics/renderers/canvas-strategies.tsx";
+import {CanvasResourceStrategy} from "@/graphics/renderers/strategies/canvas-resource-strategy.tsx";
 import type {render_settings} from "@/types.tsx";
+import {NullUpdateStrategy} from "@/graphics/renderers/strategies/null-update-strategy.tsx";
+import {CanvasPipelineStrategy} from "@/graphics/renderers/strategies/canvas-pipeline-strategy.tsx";
+import {CanvasRenderStrategy} from "@/graphics/renderers/strategies/canvas-render-strategy.tsx";
 
+/** Renders a full-screen triangle with vertex + fragment shaders only (no compute).
+ Plugs in canvas-specific strategies: uniform-only resources, a simple render
+ pipeline, a single draw call, and a no-op update step.
+*/
 export class CanvasRenderer extends StrategyBasedRenderer {
-    private canvasResourceStrategy: CanvasResourceStrategy;
-
-
     constructor(
         canvas: HTMLCanvasElement,
         shaderConfig: ShaderConfig,
         renderSettings: render_settings,
         resolution?: { width: number; height: number }
     ) {
-        const resourceStrategy = new CanvasResourceStrategy();
-        const pipelineStrategy = new CanvasPipelineStrategy();
-        const updateStrategy = new NullUpdateStrategy();
-        const renderStrategy = new CanvasRenderStrategy();
-
         super(
             canvas,
             shaderConfig,
-            pipelineStrategy,
-            resourceStrategy,
-            updateStrategy,
-            renderStrategy,
+            new CanvasPipelineStrategy(),
+            new CanvasResourceStrategy(),
+            new NullUpdateStrategy(),
+            new CanvasRenderStrategy(),
             renderSettings,
             resolution
         );
-
-        this.canvasResourceStrategy = resourceStrategy;
     }
 
-    async recompileShaders(
-        newShaderConfig: ShaderConfig,
-    ): Promise<void> {
-        
-        // Recreate strategies with new config
-        this.canvasResourceStrategy = new CanvasResourceStrategy();
-        this.resourceStrategy = this.canvasResourceStrategy;
-
-        this.renderStrategy = new CanvasRenderStrategy();
-
-
+    async recompileShaders(newShaderConfig: ShaderConfig): Promise<void> {
         await super.recompileShaders(newShaderConfig);
-    }
-
-    protected updateUniforms(): void {
-        const uniformData = new Float32Array([
-            this.resolution.width,
-            this.resolution.height,
-            this.mousePosition.x,
-            this.mousePosition.y,
-            this.resolution.width / this.resolution.height,
-            this.time.TotalTime
-        ]);
-        //console.log(uniformData);
-        this.canvasResourceStrategy.UniformBuffer.writeBuffer(uniformData);
-    }
-
-    protected getStrategyContext(): any {
-        return {
-            format: this.gpuContext.Format,
-            renderBindGroupLayout: this.canvasResourceStrategy.getRenderBindGroupLayout()
-        };
     }
 }

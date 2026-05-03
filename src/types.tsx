@@ -9,6 +9,7 @@ const TABS = {
     compute: 'compute',
     vertex: 'vertex',
     fragment: 'fragment',
+    background: 'background',
 } as const;
 
 export type tab_id = typeof TABS[keyof typeof TABS];
@@ -19,6 +20,9 @@ export type render_settings = {
     initialData: any[] | null;
 }
 
+/**
+ * A type used for templatye information
+ */
 export type template_def = {
     name: string;
     description: string;

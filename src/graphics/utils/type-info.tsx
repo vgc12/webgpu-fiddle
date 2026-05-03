@@ -1,4 +1,5 @@
-﻿/* eslint-disable @typescript-eslint/naming-convention */
+﻿// AI was used to pull the proper size and alignments for each datatype from the WebGPU Spec.
+/* eslint-disable @typescript-eslint/naming-convention */
 // WGSL type sizes and alignments (following WebGPU spec)
 export const TypeInfo: Record<string, { size: number; alignment: number }> = {
     'f32': {size: 4, alignment: 4},

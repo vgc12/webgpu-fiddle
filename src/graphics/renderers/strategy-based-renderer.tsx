@@ -1,29 +1,24 @@
-﻿import type {ShaderConfig} from "@/graphics/shaders/shader-config.tsx";
-import type {IPipelineStrategy, IRenderStrategy, IResourceStrategy, IUpdateStrategy} from "./rendering-strategies";
+import type {ShaderConfig} from "@/graphics/shaders/shader-config.tsx";
+import type {IPipelineStrategy, IRenderStrategy, IResourceStrategy, IUpdateStrategy} from "@/graphics/renderers/strategies/rendering-strategies.tsx";
 import {BaseWebGPURenderer} from "@/graphics/renderers/base-web-gpu-renderer.tsx";
 import type {render_settings} from "@/types.tsx";
 
-
-/**
- * Strategy-based renderer that composes different strategies
- * This allows for flexible renderer configurations by mixing and matching strategies
- */
+/** Extends the base renderer by delegating to four strategy interfaces instead of using inheritance for each renderer variant. Each frame: write uniforms, run compute (if present), render background (if present), draw main geometry, submit. */
 export class StrategyBasedRenderer extends BaseWebGPURenderer {
-    protected pipelines: { compute?: GPUComputePipeline; render: GPURenderPipeline };
-    protected mousePosition = { x: 1, y: 1 };
-    
+    protected pipelines: { compute?: GPUComputePipeline; render: GPURenderPipeline; background?: GPURenderPipeline };
+    protected mousePosition = {x: 1, y: 1};
+
+    /** Tracks mouse position in physical pixels for the mousePosition uniform. */
     handleMouseMove = (e: { clientX: number; clientY: number; }) => {
-       
         if (!this.canvas) {
             return;
         }
         const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        this.mousePosition = { x, y };
-        
+        const dpr = window.devicePixelRatio || 1;
+        const x = (e.clientX - rect.left) * dpr;
+        const y = (e.clientY - rect.top) * dpr;
+        this.mousePosition = {x, y};
     };
-
 
     constructor(
         canvas: HTMLCanvasElement,
@@ -39,12 +34,9 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
         canvas.addEventListener('mousemove', this.handleMouseMove);
     }
 
-
     async recompileShaders(newShaderConfig: ShaderConfig): Promise<void> {
         this.shaderConfig = newShaderConfig;
-        this.initializeResources();
         await this.createPipelines();
-        this.time.reset();
     }
 
     protected initializeResources(): void {
@@ -56,7 +48,7 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
     }
 
     protected async createPipelines(): Promise<void> {
-        const context = this.getStrategyContext();
+        const context = this.resourceStrategy.getPipelineContext(this.gpuContext.Format);
         this.pipelines = await this.pipelineStrategy.createPipelines(
             this.gpuContext.Device,
             this.resourceManager,
@@ -69,24 +61,26 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
         this.resourceStrategy.cleanup();
     }
 
+    /** Per-frame callback: upload uniforms, dispatch compute, render, submit. */
     protected update = (): void => {
         const context = this.gpuContext.Context;
         const device = this.gpuContext.Device;
 
-        // Update uniforms
         this.updateUniforms();
 
         const currentTexture = context.getCurrentTexture();
         const textureView = currentTexture.createView();
         const encoder = device.createCommandEncoder();
 
-        // Execute update strategy (e.g., compute pass)
         const bindGroups = this.resourceStrategy.BindGroups;
         if (this.pipelines.compute && bindGroups.compute) {
             this.updateStrategy.update(encoder, this.pipelines.compute, bindGroups.compute);
         }
 
-        // Execute render strategy
+        const bgInfo = this.pipelines.background && bindGroups.background
+            ? { pipeline: this.pipelines.background, bindGroup: bindGroups.background[0] }
+            : undefined;
+
         this.renderStrategy.render(
             encoder,
             textureView,
@@ -94,35 +88,25 @@ export class StrategyBasedRenderer extends BaseWebGPURenderer {
             bindGroups.render[0],
             this.renderSettings.vertexDrawCount,
             this.renderSettings.instanceCount,
-            {}
+            bgInfo,
         );
 
         device.queue.submit([encoder.finish()]);
     };
 
-
-    /**
-     * Hook for updating uniforms - can be overridden by subclasses
-     */
-    protected updateUniforms(): void {
+    /** Packs resolution, mouse, aspect ratio, time, and deltaTime into a Float32Array and uploads to the GPU uniform buffer. */
+    private updateUniforms(): void {
         const uniformData = new Float32Array([
             this.resolution.width,
             this.resolution.height,
             this.mousePosition.x,
             this.mousePosition.y,
             this.resolution.width / this.resolution.height,
-            this.time.TotalTime
+            this.time.TotalTime,
+            this.time.DeltaTime,
+            0, // padding to 32 bytes (struct alignment)
         ]);
 
         this.resourceStrategy.UniformBuffer.writeBuffer(uniformData);
-    }
-    /**
-     * Provides context for strategy initialization
-     * Override this method to provide strategy-specific context
-     */
-    protected getStrategyContext(): any {
-        return {
-            format: this.gpuContext.Format
-        };
     }
 }

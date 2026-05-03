@@ -9,6 +9,7 @@ interface Shaders {
     computeShader: string;
     vertexShader: string;
     fragmentShader: string;
+    backgroundShader?: string;
 }
 
 interface WebGPUCanvasProps {
@@ -17,6 +18,7 @@ interface WebGPUCanvasProps {
     vertexShader?: string;
     shaderType?: 'canvas' | 'particle';
     fragmentShader?: string;
+    backgroundShader?: string;
     computeConfig?: ComputeConfig | null;
     renderSettings: render_settings;
 }
@@ -51,10 +53,12 @@ function useCanvasResize(
 
         const observer = new ResizeObserver((entries) => {
             const dpr = window.devicePixelRatio || 1;
+            const maxDim = 8192;
             for (const entry of entries) {
                 const {width, height} = entry.contentRect;
-                const pw = Math.round(width * dpr);
-                const ph = Math.round(height * dpr);
+                const pw = Math.max(1, Math.min(maxDim, Math.round(width * dpr)));
+                const ph = Math.max(1, Math.min(maxDim, Math.round(height * dpr)));
+                if (canvas.width === pw && canvas.height === ph) continue;
                 canvas.width = pw;
                 canvas.height = ph;
                 onResize(pw, ph);
@@ -71,6 +75,7 @@ export const WebGPUCanvas: React.FC<WebGPUCanvasProps> = ({
                                                               computeShader = '',
                                                               vertexShader = '',
                                                               fragmentShader = '',
+                                                              backgroundShader,
                                                               shaderType = 'canvas',
                                                               computeConfig = null,
                                                               renderSettings,
@@ -92,7 +97,7 @@ export const WebGPUCanvas: React.FC<WebGPUCanvasProps> = ({
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
 
-        const shaders: Shaders = {computeShader, vertexShader, fragmentShader};
+        const shaders: Shaders = {computeShader, vertexShader, fragmentShader, backgroundShader};
         const size = {width: canvas.width, height: canvas.height};
 
         const renderer = createRenderer(canvas, shaders, renderSettings, shaderType, computeConfig, size);
