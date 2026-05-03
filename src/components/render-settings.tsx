@@ -1,3 +1,4 @@
+// AI used for applying tailwind styles in this file
 import React, {useState} from "react";
 import {Popup} from "@/components/ui/popup.tsx";
 import type {render_settings} from "@/types.tsx";

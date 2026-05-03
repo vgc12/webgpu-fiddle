@@ -47,11 +47,11 @@ describe('alignTo', () => {
         expect(alignTo(0, 16)).toBe(0);
     });
 
-    it('aligns to 8-byte boundary', () => {
+    it('aligns to 8 byte boundary', () => {
         expect(alignTo(4, 8)).toBe(8);
     });
 
-    it('aligns vec3 with 16-byte alignment after f32', () => {
+    it('aligns vec3 with 16 byte alignment after f32', () => {
         // f32 at offset 0 (size 4), vec3 needs alignment 16
         expect(alignTo(4, 16)).toBe(16);
     });
@@ -83,7 +83,7 @@ describe('parseAllStructsFromWGSL', () => {
         const data = structs.get('Data');
 
         expect(data).toBeDefined();
-        // f32 at 0, vec3 needs 16-byte alignment so offset = 16
+        // f32 at 0, vec3 needs 16 byte alignment so offset = 16
         expect(data!.fields[0]).toMatchObject({name: 'a', offset: 0, size: 4, alignment: 4});
         expect(data!.fields[1]).toMatchObject({name: 'b', offset: 16, size: 12, alignment: 16});
         // Total: 16 + 12 = 28, rounded up to 32 (alignment 16)
@@ -147,7 +147,7 @@ struct Particle { pos: vec2<f32>, vel: vec2<f32> }
         expect(result!.name).toBe('Particle');
     });
 
-    it('returns null for non-existent binding', () => {
+    it('returns null for non existent binding', () => {
         const wgsl = `struct Foo { x: f32 }`;
         const result = getStructFromBufferBinding(wgsl, 'missing');
         expect(result).toBeNull();

@@ -1,3 +1,4 @@
+// AI used for applying tailwind styles in this file
 // Tabbed Monaco editor component with WGSL support, shader diagnostics,
 // and a Ctrl+Enter compile keybinding. All editor lifecycle logic lives
 // in the useMonacoEditor hook; this file handles rendering only.

@@ -1,3 +1,4 @@
+// AI used for applying tailwind styles in this file
 import React from "react";
 
 export function Popup({title, children}: { title: string; children?: React.ReactNode }) {

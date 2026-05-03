@@ -1,3 +1,4 @@
+// AI used for applying tailwind styles and html in this file
 import React, {useEffect, useRef, useState} from "react";
 import {cn} from "@/utils/utils.tsx";
 
@@ -48,7 +49,8 @@ export function SplitPane({children, className, defaultSplit = 60}: {
                 }}
                 className="w-1.5 shrink-0 cursor-col-resize group hover:bg-blue-500/30 transition-colors relative"
             >
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0.5 h-10 bg-gray-400 dark:bg-gray-600 rounded-full group-hover:bg-blue-500 transition-colors" />
+                <div
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0.5 h-10 bg-gray-400 dark:bg-gray-600 rounded-full group-hover:bg-blue-500 transition-colors"/>
             </div>
             <div style={{width: `${100 - splitPercent}%`}} className="min-w-0 overflow-hidden rounded-lg">
                 {children[1]}

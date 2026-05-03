@@ -1,3 +1,4 @@
+// AI used for tailwind styles in this file
 import {ButtonLightRectangle} from "@/components/ui/button.tsx";
 import {Popup} from "@/components/ui/popup.tsx";
 import {TEMPLATES} from "@/templates.tsx";
