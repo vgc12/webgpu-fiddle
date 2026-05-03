@@ -2,7 +2,7 @@
 
 A browser-based WebGPU shader editor and renderer. Write WGSL shaders in a Monaco editor with live preview, hot-reloading, and shareable URLs.
 
-**[Live Demo](https://vgc12.github.io/webgpu-renderer/)** | **[Documentation](https://vgc12.github.io/docs/)**
+**[Live Demo](https://webgpu-fiddle.vercel.app)** | **[Documentation](https://webgpu-fiddle.vercel.app/docs/)**
 
 ## Features
 
@@ -29,9 +29,11 @@ A browser-based WebGPU shader editor and renderer. Write WGSL shaders in a Monac
 ### Prerequisites
 
 - Node.js 18+
-- A browser with [WebGPU support](https://caniuse.com/webgpu) (Chrome 113+, Edge 113+, Firefox Nightly)
+- A browser with [WebGPU support](https://caniuse.com/webgpu) (Chrome 113+, Edge 113+, Firefox)
 
-> **Known Issue:** Firefox on Linux may crash (segfault in Mesa radv) when resizing the canvas. This is a driver-level bug in Mesa's Vulkan implementation and cannot be worked around from the application. Chromium-based browsers on Linux are unaffected.
+**Linux Users:** 
+- To use this you may need to manually enable Vulkan as the rendering backend on your browser. To do this see the [Getting Started](https://webgpu-fiddle.vercel.app/docs/guide/getting-started.html) page of the docs.
+- Firefox on Linux may crash (segfault in Mesa radv) when resizing the canvas. This is a driver-level bug in Mesa's Vulkan implementation and cannot be worked around from the application. Chromium-based browsers on Linux are unaffected.
 
 ### Setup
 
